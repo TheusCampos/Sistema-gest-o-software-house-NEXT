@@ -48,10 +48,9 @@ function readInitialTheme(): boolean {
   if (typeof window === 'undefined') return false;
 
   const savedTheme = localStorage.getItem(THEME_KEY);
-  const prefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
-
-  // Retorna true (dark) se salvo como 'dark' ou se não salvo mas sistema prefere dark
-  return savedTheme === 'dark' || (!savedTheme && prefersDark);
+  
+  // Retorna true APENAS se o usuário tiver escolhido e salvo explicitamente 'dark'
+  return savedTheme === 'dark';
 }
 
 /**
