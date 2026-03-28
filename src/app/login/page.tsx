@@ -54,16 +54,16 @@ const Login: React.FC = () => {
     return (
         <div className="min-h-screen flex items-center justify-center bg-slate-50 dark:bg-slate-950 p-4 font-sans">
             <div className="max-w-[400px] w-full bg-white dark:bg-slate-900 rounded-[2rem] shadow-2xl border border-slate-100 dark:border-slate-800 p-8 md:p-10 animate-fadeIn relative overflow-hidden">
-                
+
                 <div className="flex flex-col items-center mb-8 text-center">
                     <div className="mb-6">
                         <svg width="60" height="60" viewBox="0 0 100 100" fill="none" xmlns="http://www.w3.org/2000/svg">
-                            <path d="M30 20H80L20 80H70" stroke="#0f172a" strokeWidth="6" strokeLinecap="round" strokeLinejoin="round"/>
-                            <path d="M30 35H80L20 95H70" stroke="#0f172a" strokeWidth="6" strokeLinecap="round" strokeLinejoin="round" opacity="0.5"/>
+                            <path d="M30 20H80L20 80H70" stroke="#0f172a" strokeWidth="6" strokeLinecap="round" strokeLinejoin="round" />
+                            <path d="M30 35H80L20 95H70" stroke="#0f172a" strokeWidth="6" strokeLinecap="round" strokeLinejoin="round" opacity="0.5" />
                         </svg>
                     </div>
                     <h1 className="text-2xl font-normal text-slate-900 dark:text-white mb-1">Zeus Enterprise Manager</h1>
-                    <p className="text-slate-500 dark:text-slate-400 text-sm">Sua infraestrutura SaaS inteligente.</p>
+                    <p className="text-slate-500 dark:text-slate-400 text-sm">Sua infraestrutura para Software Houses</p>
                 </div>
 
                 <form onSubmit={handleSubmit} className="space-y-6">
