@@ -1,6 +1,6 @@
 
 import "dotenv/config";
-import { db } from "./src/lib/db.ts";
+import { db } from "./src/lib/db";
 import { sql } from "drizzle-orm";
 
 async function migrate() {
