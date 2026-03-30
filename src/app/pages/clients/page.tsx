@@ -11,14 +11,12 @@ const DeleteModal = dynamic(() => import('@/components/business/DeleteClientModa
 import StatCard from '@/components/composite/StatCard';
 
 const ClientsList: React.FC = () => {
-    // Dados de clientes e action de persistência vêm do Context
-    const { clients, saveClient, fetchClients, currentUser, isClientsLoading } = useApp();
+    const { clients, saveClient, fetchClients, isClientsLoading } = useApp();
     // ... (removed my previous comment block)
     // Carrega os clientes ao montar o componente
     useEffect(() => {
-        if (!currentUser?.tenantId) return;
-        fetchClients(currentUser.tenantId);
-    }, [fetchClients, currentUser]);
+        fetchClients('default');
+    }, [fetchClients]);
 
 
 

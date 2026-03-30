@@ -10,10 +10,11 @@ export const dynamic = "force-dynamic";
 import { withAuth } from "@/lib/api-wrapper";
 
 // GET /api/clients — listagem resumida
-export const GET = withAuth(async (request, session) => {
+export const GET = withAuth(async (request, _session) => {
   const { searchParams } = new URL(request.url);
   const limit = parseInt(searchParams.get('limit') || '50', 10);
   const offset = parseInt(searchParams.get('offset') || '0', 10);
+  const tenantIdParam = searchParams.get('tenantId') || 'default';
 
   const result = await db.execute(sql`
       SELECT
@@ -25,7 +26,7 @@ export const GET = withAuth(async (request, session) => {
       LEFT JOIN client_general_info  g ON g.tenant_id = c.tenant_id AND g.client_id = c.id
       LEFT JOIN client_status_info   s ON s.tenant_id = c.tenant_id AND s.client_id = c.id
       LEFT JOIN client_address_info  a ON a.tenant_id = c.tenant_id AND a.client_id = c.id
-      WHERE c.tenant_id = ${session.tenantId} 
+      WHERE c.tenant_id = ${tenantIdParam} 
         AND c.active = true
       ORDER BY g.razao
       LIMIT ${limit} OFFSET ${offset}

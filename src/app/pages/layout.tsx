@@ -48,7 +48,7 @@ export default function AuthLayout({ children }: { children: React.ReactNode }) 
         hasFetched.current = true;
         const tenantId = currentUser.tenantId;
 
-        fetchClients(tenantId);
+        fetchClients('default');
         fetchContracts(tenantId);
         fetchTickets(tenantId);
         fetchEquipment(tenantId);

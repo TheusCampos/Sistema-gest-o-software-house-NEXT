@@ -26,7 +26,7 @@ export const GET = withAuth(async (_request, session, { params }: ApiContext<{ i
       LEFT JOIN client_contract_info ct ON ct.tenant_id = c.tenant_id AND ct.client_id = c.id
       LEFT JOIN client_modules_info  m  ON m.tenant_id  = c.tenant_id AND m.client_id  = c.id
       LEFT JOIN client_status_info   s  ON s.tenant_id  = c.tenant_id AND s.client_id  = c.id
-      WHERE c.tenant_id = ${session.tenantId} AND c.id = ${idValue}
+      WHERE (c.tenant_id = ${session.tenantId} OR c.tenant_id = 'default') AND c.id = ${idValue}
     `);
 
     if (!result.rows.length) {
