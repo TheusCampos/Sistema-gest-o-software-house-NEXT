@@ -34,6 +34,8 @@ type AuthActions = {
   logout: () => void;
   // Restaura o usuário do armazenamento local
   hydrateFromStorage: () => void;
+  // Atualiza os dados do usuário atual (para trocar avatar/nome em tempo real)
+  updateCurrentUser: (userData: Partial<User>) => void;
 };
 
 // Chave utilizada no LocalStorage para salvar os dados do usuário
@@ -103,5 +105,16 @@ export const useAuthStore = create<AuthState & AuthActions>((set) => ({
   // Implementação da Hidratação
   hydrateFromStorage: () => {
     set({ currentUser: readStoredUser() });
+  },
+
+  updateCurrentUser: (userData) => {
+    set((state) => {
+      if (!state.currentUser) return state;
+      const updated = { ...state.currentUser, ...userData };
+      if (typeof window !== 'undefined') {
+        localStorage.setItem(STORAGE_KEY, JSON.stringify(updated));
+      }
+      return { currentUser: updated };
+    });
   },
 }));

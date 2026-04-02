@@ -92,93 +92,98 @@ export const POST = withAuth(async (request, session) => {
   const body = await request.json();
   const parsedData = clientPayloadSchema.parse(body);
 
-  const newClient = await db.transaction(async (tx) => {
-    // 1. Inserir registro raiz
-    const insertClientResult = await tx.execute(sql`
-        INSERT INTO clients (tenant_id, active)
-        VALUES (${session.tenantId}, ${parsedData.active})
-        RETURNING id
-      `);
-    const clientId = String(insertClientResult.rows[0].id);
+  try {
+    const newClient = await db.transaction(async (tx) => {
+      // 1. Inserir registro raiz
+      const insertClientResult = await tx.execute(sql`
+          INSERT INTO clients (tenant_id, active)
+          VALUES (${session.tenantId}, ${parsedData.active})
+          RETURNING id
+        `);
+      const clientId = String(insertClientResult.rows[0].id);
 
-    // 2. Dados gerais
-    // NOTA: A tabela client_general_info usa nomes de colunas abreviados/diferentes do payload da API
-    await tx.execute(sql`
-        INSERT INTO client_general_info (
-          tenant_id, client_id, razao, fantasia, tipo_pessoa, documento, cnpj,
-          inscricao_estadual_rg, data_abertura, email, tel, cel,
-          home_page, resp, observacao, server_id
-        ) VALUES (
-          ${session.tenantId}, ${clientId}, ${parsedData.general.razao}, ${parsedData.general.fantasia || ''},
-          ${parsedData.general.tipoPessoa}, ${parsedData.general.documento}, ${parsedData.general.documento}, ${parsedData.general.inscricaoEstadualRg || null},
-          ${parsedData.general.dataAbertura ? new Date(parsedData.general.dataAbertura).toISOString() : null}, ${parsedData.general.email || ''},
-          ${parsedData.general.telefone1 || ''}, ${parsedData.general.telefone2 || ''}, ${parsedData.general.homePage || null},
-          ${parsedData.general.contatoResponsavel || ''}, ${parsedData.general.observacao || null}, ${parsedData.general.serverId || null}
-        )
-      `);
+      // 2. Dados gerais
+      await tx.execute(sql`
+          INSERT INTO client_general_info (
+            tenant_id, client_id, razao, fantasia, tipo_pessoa, documento, cnpj,
+            inscricao_estadual_rg, data_abertura, email, tel, cel,
+            home_page, resp, observacao, server_id
+          ) VALUES (
+            ${session.tenantId}, ${clientId}, ${parsedData.general.razao}, ${parsedData.general.fantasia || ''},
+            ${parsedData.general.tipoPessoa}, ${parsedData.general.documento}, ${parsedData.general.documento}, ${parsedData.general.inscricaoEstadualRg || null},
+            ${parsedData.general.dataAbertura ? new Date(parsedData.general.dataAbertura).toISOString() : null}, ${parsedData.general.email || ''},
+            ${parsedData.general.telefone1 || ''}, ${parsedData.general.telefone2 || ''}, ${parsedData.general.homePage || null},
+            ${parsedData.general.contatoResponsavel || ''}, ${parsedData.general.observacao || null}, ${parsedData.general.serverId || null}
+          )
+        `);
 
-    // 3. Endereço
-    await tx.execute(sql`
-        INSERT INTO client_address_info (
-          tenant_id, client_id, logradouro, numero, complemento, bairro, cidade, uf, cep
-        ) VALUES (
-          ${session.tenantId}, ${clientId}, ${parsedData.address.logradouro}, ${parsedData.address.numero},
-          ${parsedData.address.complemento || null}, ${parsedData.address.bairro}, ${parsedData.address.cidade},
-          ${parsedData.address.uf}, ${parsedData.address.cep}
-        )
-      `);
+      // 3. Endereço
+      await tx.execute(sql`
+          INSERT INTO client_address_info (
+            tenant_id, client_id, logradouro, numero, complemento, bairro, cidade, uf, cep
+          ) VALUES (
+            ${session.tenantId}, ${clientId}, ${parsedData.address.logradouro}, ${parsedData.address.numero},
+            ${parsedData.address.complemento || null}, ${parsedData.address.bairro}, ${parsedData.address.cidade},
+            ${parsedData.address.uf}, ${parsedData.address.cep}
+          )
+        `);
 
-    // 4. Contrato
-    await tx.execute(sql`
-        INSERT INTO client_contract_info (
-          tenant_id, client_id, valor_implantacao, valor_mensal, percentual_comissao,
-          dia_vencimento, mes_ajuste, percentual_ajuste, terminais, data_implantacao,
-          inicio_mensal, liberacao
-        ) VALUES (
-          ${session.tenantId}, ${clientId}, ${parsedData.contract.valorImplantacao || null},
-          ${parsedData.contract.valorMensal || null}, ${parsedData.contract.percentualComissao || null},
-          ${parsedData.contract.diaVencimento || null}, ${parsedData.contract.mesAjuste || null},
-          ${parsedData.contract.percentualAjuste || null}, ${parsedData.contract.terminais || 1},
-          ${parsedData.contract.dataImplantacao ? new Date(parsedData.contract.dataImplantacao).toISOString() : null},
-          ${parsedData.contract.inicioMensal ? new Date(parsedData.contract.inicioMensal).toISOString() : null},
-          ${parsedData.contract.liberacao}
-        )
-      `);
+      // 4. Contrato
+      await tx.execute(sql`
+          INSERT INTO client_contract_info (
+            tenant_id, client_id, valor_implantacao, valor_mensal, percentual_comissao,
+            dia_vencimento, mes_ajuste, percentual_ajuste, terminais, data_implantacao,
+            inicio_mensal, liberacao
+          ) VALUES (
+            ${session.tenantId}, ${clientId}, ${parsedData.contract.valorImplantacao || null},
+            ${parsedData.contract.valorMensal || null}, ${parsedData.contract.percentualComissao || null},
+            ${parsedData.contract.diaVencimento || null}, ${parsedData.contract.mesAjuste || null},
+            ${parsedData.contract.percentualAjuste || null}, ${parsedData.contract.terminais || 1},
+            ${parsedData.contract.dataImplantacao ? new Date(parsedData.contract.dataImplantacao).toISOString() : null},
+            ${parsedData.contract.inicioMensal ? new Date(parsedData.contract.inicioMensal).toISOString() : null},
+            ${parsedData.contract.liberacao}
+          )
+        `);
 
-    // 5. Módulos
-    await tx.execute(sql`
-        INSERT INTO client_modules_info (
-          tenant_id, client_id, contas_receber, contas_pagar, faturamento, estoque, nfe, sped,
-          sped_pis_cofins, servico, pacote, movimento_bancario, crediario, nfce, nfse, ferramentas_gestao
-        ) VALUES (
-          ${session.tenantId}, ${clientId}, ${parsedData.modules.contasReceber}, ${parsedData.modules.contasPagar},
-          ${parsedData.modules.faturamento}, ${parsedData.modules.estoque}, ${parsedData.modules.nfe},
-          ${parsedData.modules.sped}, ${parsedData.modules.spedPisCofins}, ${parsedData.modules.servico},
-          ${parsedData.modules.pacote}, ${parsedData.modules.movimentoBancario}, ${parsedData.modules.crediario},
-          ${parsedData.modules.nfce}, ${parsedData.modules.nfse}, ${parsedData.modules.ferramentasGestao}
-        )
-      `);
+      // 5. Módulos
+      await tx.execute(sql`
+          INSERT INTO client_modules_info (
+            tenant_id, client_id, contas_receber, contas_pagar, faturamento, estoque, nfe, sped,
+            sped_pis_cofins, servico, pacote, movimento_bancario, crediario, nfce, nfse, ferramentas_gestao
+          ) VALUES (
+            ${session.tenantId}, ${clientId}, ${parsedData.modules.contasReceber}, ${parsedData.modules.contasPagar},
+            ${parsedData.modules.faturamento}, ${parsedData.modules.estoque}, ${parsedData.modules.nfe},
+            ${parsedData.modules.sped}, ${parsedData.modules.spedPisCofins}, ${parsedData.modules.servico},
+            ${parsedData.modules.pacote}, ${parsedData.modules.movimentoBancario}, ${parsedData.modules.crediario},
+            ${parsedData.modules.nfce}, ${parsedData.modules.nfse}, ${parsedData.modules.ferramentasGestao}
+          )
+        `);
 
-    // 6. Status
-    await tx.execute(sql`
-        INSERT INTO client_status_info (
-          tenant_id, client_id, possui_credito, suspenso_parado, agente_vendas, permite_venda_prazo,
-          bloqueado_liberacao, contrato_assinado, bloqueado, recebimento_carteira, sem_recebimento, ajuda_custo
-        ) VALUES (
-          ${session.tenantId}, ${clientId}, ${parsedData.status.possuiCredito}, ${parsedData.status.suspensoParado},
-          ${parsedData.status.agenteVendas}, ${parsedData.status.permiteVendaPrazo}, ${parsedData.status.bloqueadoLiberacao},
-          ${parsedData.status.contratoAssinado}, ${parsedData.status.bloqueado}, ${parsedData.status.recebimentoCarteira},
-          ${parsedData.status.semRecebimento}, ${parsedData.status.ajudaCusto}
-        )
-      `);
+      // 6. Status
+      await tx.execute(sql`
+          INSERT INTO client_status_info (
+            tenant_id, client_id, possui_credito, suspenso_parado, agente_vendas, permite_venda_prazo,
+            bloqueado_liberacao, contrato_assinado, bloqueado, recebimento_carteira, sem_recebimento, ajuda_custo
+          ) VALUES (
+            ${session.tenantId}, ${clientId}, ${parsedData.status.possuiCredito}, ${parsedData.status.suspensoParado},
+            ${parsedData.status.agenteVendas}, ${parsedData.status.permiteVendaPrazo}, ${parsedData.status.bloqueadoLiberacao},
+            ${parsedData.status.contratoAssinado}, ${parsedData.status.bloqueado}, ${parsedData.status.recebimentoCarteira},
+            ${parsedData.status.semRecebimento}, ${parsedData.status.ajudaCusto}
+          )
+        `);
 
-    return {
-      id: clientId,
-      ...parsedData
-    };
-  });
+      return {
+        id: clientId,
+        ...parsedData
+      };
+    });
 
-  return NextResponse.json(newClient, { status: 201 });
+    return NextResponse.json(newClient, { status: 201 });
+  } catch (error: any) {
+    console.error("DEBUG CLIENT SAVE ERROR:", error);
+    const detail = error.detail || error.message || "Erro desconhecido";
+    return NextResponse.json({ message: "Erro ao salvar cliente: " + detail }, { status: 500 });
+  }
 });
 
 // PUT /api/clients — atualização completa
@@ -190,7 +195,8 @@ export const PUT = withAuth(async (request, session) => {
     return NextResponse.json({ message: "ID é obrigatório para atualização." }, { status: 400 });
   }
 
-  await db.transaction(async (tx) => {
+  try {
+    await db.transaction(async (tx) => {
     // 1. Update Root
     await tx.execute(sql`
         UPDATE clients 
@@ -248,7 +254,6 @@ export const PUT = withAuth(async (request, session) => {
         WHERE client_id = ${parsedData.id} AND tenant_id = ${session.tenantId}
       `);
 
-    // 6. Update Status
     await tx.execute(sql`
         UPDATE client_status_info SET
           possui_credito = ${parsedData.status.possuiCredito}, suspenso_parado = ${parsedData.status.suspensoParado},
@@ -259,9 +264,14 @@ export const PUT = withAuth(async (request, session) => {
           updated_at = NOW()
         WHERE client_id = ${parsedData.id} AND tenant_id = ${session.tenantId}
       `);
-  });
+    });
 
-  return NextResponse.json(parsedData);
+    return NextResponse.json(parsedData);
+  } catch (error: any) {
+    console.error("DEBUG CLIENT UPDATE ERROR:", error);
+    const detail = error.detail || error.message || "Erro desconhecido";
+    return NextResponse.json({ message: "Erro ao atualizar cliente: " + detail }, { status: 500 });
+  }
 });
 
 export const DELETE = withAuth(async (request, session) => {

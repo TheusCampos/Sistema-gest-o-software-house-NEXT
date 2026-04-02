@@ -126,10 +126,13 @@ const Sidebar: React.FC = () => {
                 {/* User card matching image */}
                 <div className="flex items-center justify-between gap-3 p-3 bg-white dark:bg-slate-800 border border-[#f1f5f9] dark:border-slate-700 rounded-2xl shadow-sm mb-3">
                     <div className="flex items-center gap-3 overflow-hidden">
-                        <div 
-                            className="shrink-0 w-10 h-10 rounded-lg bg-slate-200 dark:bg-slate-700 bg-cover bg-center border border-slate-100 dark:border-slate-600" 
-                            style={{ backgroundImage: `url("${currentUser?.avatar || `https://ui-avatars.com/api/?name=${encodeURIComponent(currentUser?.name || '')}&background=random`}")` }}
-                        ></div>
+                        <div className="shrink-0 w-10 h-10 rounded-lg overflow-hidden border border-slate-100 dark:border-slate-600 bg-slate-200 dark:bg-slate-700">
+                            <img 
+                                src={currentUser?.avatar || `https://ui-avatars.com/api/?name=${encodeURIComponent(currentUser?.name || '')}&background=random`}
+                                alt="Avatar"
+                                className="w-full h-full object-cover"
+                            />
+                        </div>
                         <div className="flex flex-col min-w-0">
                             <p className="text-[13px] font-bold text-slate-900 dark:text-white truncate">{currentUser?.name || 'Usuário'}</p>
                             <p className="text-[10px] text-slate-400 font-bold uppercase tracking-wider truncate">

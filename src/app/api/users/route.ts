@@ -169,7 +169,7 @@ export const POST = withAuth(async (request, session) => {
                     ${body.email},
                     ${hashedPassword},
                     ${role.toLowerCase()}::user_role_enum,
-                    ${body.avatar || ""},
+                    ${body.avatar || null},
                     ${body.active ?? true}
                 ) RETURNING id
             `);
@@ -214,7 +214,9 @@ export const POST = withAuth(async (request, session) => {
         if (detail.includes("users_email_key")) {
             return NextResponse.json({ message: "Este e-mail já está em uso por outro usuário." }, { status: 409 });
         }
-        return NextResponse.json({ message: "Erro ao salvar: " + detail }, { status: 500 });
+        // Retornar a mensagem completa do erro para debugar no frontend se necessário
+        const errorMessage = e.message || e.toString();
+        return NextResponse.json({ message: "Erro ao salvar: " + (detail !== errorMessage ? detail + " (" + errorMessage + ")" : detail) }, { status: 500 });
     }
 });
 
@@ -240,7 +242,7 @@ export const PUT = withAuth(async (request, session) => {
                         email = ${body.email},
                         password = ${hashPassword(body.password.trim())},
                         role = ${role.toLowerCase()}::user_role_enum,
-                        avatar = ${body.avatar || ""},
+                        avatar = ${body.avatar !== undefined ? body.avatar : sql`avatar`},
                         active = ${body.active ?? true},
                         updated_at = NOW()
                     WHERE id = ${body.id} AND tenant_id = ${session.tenantId}
@@ -251,7 +253,7 @@ export const PUT = withAuth(async (request, session) => {
                         name = ${body.name},
                         email = ${body.email},
                         role = ${role.toLowerCase()}::user_role_enum,
-                        avatar = ${body.avatar || ""},
+                        avatar = ${body.avatar !== undefined ? body.avatar : sql`avatar`},
                         active = ${body.active ?? true},
                         updated_at = NOW()
                     WHERE id = ${body.id} AND tenant_id = ${session.tenantId}

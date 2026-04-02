@@ -7,6 +7,7 @@ import { UserPermissionsGrid } from "@/components/business/UserPermissionsGrid";
 import { userSchema, UserFormData } from "@/resources/users/schemas";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
+import { useAuthStore } from "@/stores/authStore";
 
 interface UserFormProps {
   onSave: (data: User) => Promise<void>;
@@ -21,6 +22,19 @@ export const UserForm: React.FC<UserFormProps> = ({
 }) => {
   const router = useRouter();
   const [showPassword, setShowPassword] = useState(false);
+  const [avatarBase64, setAvatarBase64] = useState<string | null>(editingUser?.avatar || null);
+  const { currentUser: authUser, updateCurrentUser } = useAuthStore();
+
+  const handleAvatarChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    const reader = new FileReader();
+    reader.onloadend = () => {
+      setAvatarBase64(reader.result as string);
+    };
+    reader.readAsDataURL(file);
+  };
   
   const {
     register,
@@ -45,6 +59,7 @@ export const UserForm: React.FC<UserFormProps> = ({
 
   useEffect(() => {
     if (editingUser) {
+      setAvatarBase64(editingUser.avatar || null);
       reset({
         name: editingUser.name,
         email: editingUser.email,
@@ -56,6 +71,7 @@ export const UserForm: React.FC<UserFormProps> = ({
           : PERMISSIONS_TEMPLATES[editingUser.role] || EMPTY_PERMISSIONS,
       });
     } else {
+      setAvatarBase64(null);
       reset({
         name: "",
         email: "",
@@ -120,7 +136,7 @@ export const UserForm: React.FC<UserFormProps> = ({
     const payload: User = {
       id: editingUser?.id || crypto.randomUUID(),
       tenantId: editingUser?.tenantId || "", // Será preenchido pelo store/page
-      avatar: editingUser?.avatar || `https://ui-avatars.com/api/?name=${encodeURIComponent(data.name)}&background=random`,
+      avatar: avatarBase64 || `https://ui-avatars.com/api/?name=${encodeURIComponent(data.name)}&background=random`,
       ...data,
       permissions: finalPermissions,
     };
@@ -132,6 +148,16 @@ export const UserForm: React.FC<UserFormProps> = ({
 
     try {
       await onSave(payload);
+      
+      // Se estiver editando o PRÓPRIO perfil, atualiza a sessão local
+      if (authUser && authUser.id === payload.id) {
+        updateCurrentUser({
+          name: payload.name,
+          avatar: payload.avatar,
+          role: payload.role // Caso o role mude mas ele continue admin/dev
+        });
+      }
+
       router.push("/pages/users");
     } catch (error: any) {
       console.error("Erro ao salvar usuário:", error);
@@ -173,6 +199,30 @@ export const UserForm: React.FC<UserFormProps> = ({
 
         <div className="flex-1 overflow-y-auto p-4 sm:p-8 custom-scrollbar">
           <form id="userForm" onSubmit={handleSubmit(onFormSubmit)} className="space-y-8">
+            <div className="flex flex-col md:flex-row items-center gap-8 mb-8 pb-8 border-b border-slate-100 dark:border-slate-800">
+               <div className="relative group">
+                  <div 
+                    className="w-32 h-32 rounded-[2.5rem] bg-slate-100 dark:bg-slate-800 border-2 border-dashed border-slate-300 dark:border-slate-700 overflow-hidden flex items-center justify-center bg-cover bg-center"
+                  >
+                    {avatarBase64 ? (
+                        <img src={avatarBase64} className="w-full h-full object-cover" alt="Avatar" />
+                    ) : (
+                         <span className="material-symbols-outlined text-slate-400 text-3xl font-light">add_a_photo</span>
+                    )}
+                  </div>
+                  {!isReadOnly && (
+                    <label className="absolute inset-0 cursor-pointer flex items-center justify-center bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity rounded-[2.5rem]">
+                      <span className="text-white text-[10px] font-black uppercase tracking-widest">Alterar Foto</span>
+                      <input type="file" className="hidden" accept="image/*" onChange={handleAvatarChange} />
+                    </label>
+                  )}
+               </div>
+               <div className="flex-1">
+                  <h4 className="text-slate-900 dark:text-white font-black uppercase tracking-tight text-xl mb-1">Foto do Perfil</h4>
+                  <p className="text-slate-500 text-sm">Clique na moldura para selecionar uma imagem do seu computador.</p>
+               </div>
+            </div>
+
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
               <div className="space-y-1">
                 <label className="text-[10px] font-black text-slate-500 dark:text-slate-400 uppercase tracking-widest ml-1">
