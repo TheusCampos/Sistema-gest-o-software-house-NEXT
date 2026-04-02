@@ -209,17 +209,26 @@ export const POST = withAuth(async (request, session) => {
     } catch (e: any) {
         console.error("CRITICAL USER SAVE ERROR:", e);
         
-        // Log detalhado para o servidor
         const pgDetail = e.detail || "";
         const pgHint = e.hint || "";
         const message = e.message || "Erro desconhecido";
         
-        if (message.includes("users_email_key") || pgDetail.includes("already exists")) {
-            return NextResponse.json({ message: "Este e-mail já está em uso neste sistema." }, { status: 409 });
+        // Verifica se é erro de unicidade (e-mail já existe)
+        const isDuplicate = message.toLowerCase().includes("unique") || 
+                           message.toLowerCase().includes("duplicate") ||
+                           pgDetail.toLowerCase().includes("already exists") ||
+                           message.includes("users_email_key");
+
+        if (isDuplicate) {
+            return NextResponse.json({ 
+                message: "Este e-mail já está em uso neste sistema (CNPJ/Tenant).", 
+                detail: pgDetail,
+                hint: "Tente usar um e-mail diferente."
+            }, { status: 409 });
         }
         
         return NextResponse.json({ 
-            message: "Erro ao salvar: " + message, 
+            message: "Erro interno no banco: " + message, 
             detail: pgDetail,
             hint: pgHint
         }, { status: 500 });
