@@ -1,12 +1,11 @@
 import React from 'react';
+import Link from 'next/link';
 import { User } from '@/types';
 
 interface UserListTableProps {
     users: User[];
     searchTerm: string;
     onSearchChange: (value: string) => void;
-    onView: (user: User) => void;
-    onEdit: (user: User) => void;
     onDelete: (user: User) => void;
     isLoading: boolean;
 }
@@ -15,8 +14,6 @@ export const UserListTable: React.FC<UserListTableProps> = ({
     users,
     searchTerm,
     onSearchChange,
-    onView,
-    onEdit,
     onDelete,
     isLoading
 }) => {
@@ -205,24 +202,24 @@ export const UserListTable: React.FC<UserListTableProps> = ({
                                             </td>
                                             <td className="px-0 md:px-8 py-2 md:py-[6px] w-full md:w-32 md:shrink-0 text-right flex items-center justify-end">
                                                 <div className="flex items-center justify-end gap-1 w-full">
-                                                    <button
-                                                        onClick={() => onView(user)}
-                                                        className="p-2 text-slate-400 hover:text-primary transition-colors"
+                                                    <Link
+                                                        href={`/pages/users/${user.id}?readOnly=true`}
+                                                        className="p-2 text-slate-400 hover:text-primary transition-colors flex items-center justify-center"
                                                         title="Visualizar"
                                                     >
                                                         <span className="material-symbols-outlined text-[20px]">
                                                             visibility
                                                         </span>
-                                                    </button>
-                                                    <button
-                                                        onClick={() => onEdit(user)}
-                                                        className="p-2 text-slate-400 hover:text-amber-500 transition-colors"
+                                                    </Link>
+                                                    <Link
+                                                        href={`/pages/users/${user.id}`}
+                                                        className="p-2 text-slate-400 hover:text-amber-500 transition-colors flex items-center justify-center"
                                                         title="Editar"
                                                     >
                                                         <span className="material-symbols-outlined text-[20px]">
                                                             edit
                                                         </span>
-                                                    </button>
+                                                    </Link>
                                                     <button
                                                         onClick={() => onDelete(user)}
                                                         className="p-2 text-slate-400 hover:text-rose-600 transition-colors"

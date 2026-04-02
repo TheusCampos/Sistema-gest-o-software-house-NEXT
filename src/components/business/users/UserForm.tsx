@@ -5,22 +5,21 @@ import { User, UserPermissions, CRUDPermissions } from "@/types";
 import { EMPTY_PERMISSIONS, PERMISSIONS_TEMPLATES } from "@/permissions";
 import { UserPermissionsGrid } from "@/components/business/UserPermissionsGrid";
 import { userSchema, UserFormData } from "@/resources/users/schemas";
+import Link from "next/link";
+import { useRouter } from "next/navigation";
 
-interface UserFormModalProps {
-  isOpen: boolean;
-  onClose: () => void;
+interface UserFormProps {
   onSave: (data: User) => Promise<void>;
   editingUser?: User | null;
   isReadOnly?: boolean;
 }
 
-export const UserFormModal: React.FC<UserFormModalProps> = ({
-  isOpen,
-  onClose,
+export const UserForm: React.FC<UserFormProps> = ({
   onSave,
   editingUser,
   isReadOnly = false,
 }) => {
+  const router = useRouter();
   const [showPassword, setShowPassword] = useState(false);
   
   const {
@@ -66,7 +65,7 @@ export const UserFormModal: React.FC<UserFormModalProps> = ({
         permissions: JSON.parse(JSON.stringify(EMPTY_PERMISSIONS)),
       });
     }
-  }, [editingUser, reset, isOpen]);
+  }, [editingUser, reset]);
 
   const handleRoleChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
     const newRole = e.target.value as User["role"];
@@ -133,7 +132,7 @@ export const UserFormModal: React.FC<UserFormModalProps> = ({
 
     try {
       await onSave(payload);
-      onClose();
+      router.push("/pages/users");
     } catch (error: any) {
       console.error("Erro ao salvar usuário:", error);
       const apiMessage = error.response?.data?.message || error.message || "Erro desconhecido";
@@ -141,13 +140,18 @@ export const UserFormModal: React.FC<UserFormModalProps> = ({
     }
   };
 
-  if (!isOpen) return null;
-
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-sm animate-fadeIn">
-      <div className="bg-white dark:bg-slate-900 rounded-[2rem] shadow-2xl border border-slate-200 dark:border-slate-800 w-full max-w-4xl max-h-[90vh] flex flex-col overflow-hidden animate-dropIn">
-        <div className="p-8 border-b border-slate-100 dark:border-slate-800 flex justify-between items-center shrink-0">
-          <h3 className="text-2xl font-black text-slate-900 dark:text-white flex items-center gap-2 tracking-tight">
+    <div className="w-full max-w-[1000px] mx-auto flex flex-col gap-6 animate-fadeIn pb-12">
+      <nav className="flex items-center gap-2 text-sm px-2">
+        <Link href="/dashboard" className="text-[#4c6c9a] dark:text-slate-400 hover:text-primary font-medium">Dashboard</Link>
+        <span className="material-symbols-outlined text-xs">chevron_right</span>
+        <Link href="/pages/users" className="text-[#4c6c9a] dark:text-slate-400 hover:text-primary font-medium">Usuários</Link>
+        <span className="text-primary font-bold">/ {editingUser ? (isReadOnly ? 'Visualizar' : 'Editar') : 'Novo'}</span>
+      </nav>
+
+      <div className="bg-white dark:bg-slate-900 rounded-[2rem] shadow-sm border border-slate-200 dark:border-slate-800 flex flex-col overflow-hidden animate-dropIn">
+        <div className="p-4 sm:p-8 border-b border-slate-100 dark:border-slate-800 flex justify-between items-center shrink-0 bg-slate-50/50 dark:bg-slate-800/30">
+          <h3 className="text-lg sm:text-2xl font-black text-slate-900 dark:text-white flex items-center gap-2 tracking-tight">
             <span className="material-symbols-outlined text-primary">
               manage_accounts
             </span>
@@ -157,17 +161,17 @@ export const UserFormModal: React.FC<UserFormModalProps> = ({
                 ? "Editar Usuário & Permissões"
                 : "Novo Cadastro de Usuário"}
           </h3>
-          <button
-            onClick={onClose}
-            className="text-slate-400 hover:text-slate-600 dark:hover:text-slate-200"
+          <Link
+            href="/pages/users"
+            className="w-10 h-10 flex items-center justify-center text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 bg-slate-100 dark:bg-slate-800 rounded-xl"
           >
             <span className="material-symbols-outlined text-[24px]">
               close
             </span>
-          </button>
+          </Link>
         </div>
 
-        <div className="flex-1 overflow-y-auto p-8 custom-scrollbar">
+        <div className="flex-1 overflow-y-auto p-4 sm:p-8 custom-scrollbar">
           <form id="userForm" onSubmit={handleSubmit(onFormSubmit)} className="space-y-8">
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
               <div className="space-y-1">
@@ -269,14 +273,13 @@ export const UserFormModal: React.FC<UserFormModalProps> = ({
           </form>
         </div>
 
-        <div className="p-8 border-t border-slate-100 dark:border-slate-800 flex justify-end gap-3 bg-slate-50 dark:bg-slate-900/50 rounded-b-[2rem]">
-          <button
-            type="button"
-            onClick={onClose}
-            className="px-6 py-3 text-xs font-black uppercase tracking-widest text-slate-600 dark:text-slate-400 hover:bg-slate-200 dark:hover:bg-slate-800 rounded-xl transition-colors"
+        <div className="p-4 sm:p-8 border-t border-slate-100 dark:border-slate-800 flex justify-end gap-3 bg-slate-50 dark:bg-slate-900/50 rounded-b-[2rem]">
+          <Link
+            href="/pages/users"
+            className="px-6 py-3 text-xs font-black uppercase tracking-widest text-slate-600 dark:text-slate-400 hover:bg-slate-200 dark:hover:bg-slate-800 rounded-xl transition-colors flex items-center justify-center"
           >
-            {isReadOnly ? "Fechar" : "Cancelar"}
-          </button>
+            {isReadOnly ? "Voltar" : "Cancelar"}
+          </Link>
           {!isReadOnly && (
             <button
               type="submit"

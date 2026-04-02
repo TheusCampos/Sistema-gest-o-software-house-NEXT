@@ -18,7 +18,7 @@ const TopBar: React.FC = () => {
                 </button>
 
                 {/* Campo de busca (atualmente apenas visual / placeholder) */}
-                <div className="relative w-full max-w-[280px]">
+                <div className="hidden sm:block relative w-full max-w-[280px]">
                     <span className="material-symbols-outlined absolute left-4 top-1/2 -translate-y-1/2 text-[#94a3b8] text-[20px]">search</span>
                     <input
                         className="w-full h-11 pl-12 pr-4 bg-[#f1f5f9] dark:bg-slate-800 border-none rounded-2xl text-[14px] font-medium placeholder:text-[#94a3b8] dark:text-slate-200 focus:ring-2 focus:ring-[#e2e8f0] focus:outline-none transition-all"

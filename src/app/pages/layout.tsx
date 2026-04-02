@@ -67,7 +67,7 @@ export default function AuthLayout({ children }: { children: React.ReactNode }) 
 
             <div className="flex-1 flex flex-col w-full h-full transition-all duration-300 md:pl-72">
                 <TopBar />
-                <main className="flex-1 p-6 md:p-10 relative overflow-y-auto custom-scrollbar">
+                <main className="flex-1 p-6 md:p-10 overflow-y-auto custom-scrollbar">
                     {children}
                 </main>
             </div>
