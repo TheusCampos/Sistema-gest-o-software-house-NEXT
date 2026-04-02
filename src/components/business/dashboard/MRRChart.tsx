@@ -37,6 +37,14 @@ const CustomTooltip = ({ active, payload, label }: CustomTooltipProps) => {
 };
 
 export const MRRChart: React.FC<MRRChartProps> = ({ totalMRR, data }) => {
+    const [isMounted, setIsMounted] = React.useState(false);
+
+    React.useEffect(() => {
+        const timer = setTimeout(() => {
+            setIsMounted(true);
+        }, 150);
+        return () => clearTimeout(timer);
+    }, []);
 
     const hasData = data && data.some(d => d.mrr > 0);
 
@@ -65,50 +73,52 @@ export const MRRChart: React.FC<MRRChartProps> = ({ totalMRR, data }) => {
                         </div>
                     </div>
                 ) : (
-                    <ResponsiveContainer width="100%" height="100%">
-                        <AreaChart
-                            data={data}
-                            margin={{ top: 10, right: 10, left: 0, bottom: 0 }}
-                        >
-                            <defs>
-                                <linearGradient id="colorMrr" x1="0" y1="0" x2="0" y2="1">
-                                    <stop offset="5%" stopColor="#136dec" stopOpacity={0.3}/>
-                                    <stop offset="95%" stopColor="#136dec" stopOpacity={0}/>
-                                </linearGradient>
-                            </defs>
-                            <CartesianGrid 
-                                strokeDasharray="3 3" 
-                                vertical={false} 
-                                stroke="#f1f5f9" 
-                                className="dark:stroke-slate-800"
-                            />
-                            <XAxis 
-                                dataKey="name" 
-                                axisLine={false}
-                                tickLine={false}
-                                tick={{ fill: '#94a3b8', fontSize: 12, fontWeight: 500 }}
-                                dy={10}
-                            />
-                            <YAxis 
-                                axisLine={false}
-                                tickLine={false}
-                                tick={{ fill: '#94a3b8', fontSize: 12, fontWeight: 500 }}
-                                tickFormatter={(value) => `R$ ${(value / 1000).toFixed(0)}k`}
-                                hide={window.innerWidth < 768}
-                            />
-                            <Tooltip content={<CustomTooltip />} />
-                            <Area 
-                                type="monotone" 
-                                dataKey="mrr" 
-                                stroke="#136dec" 
-                                strokeWidth={4}
-                                fillOpacity={1} 
-                                fill="url(#colorMrr)" 
-                                animationDuration={1500}
-                                animationEasing="ease-in-out"
-                            />
-                        </AreaChart>
-                    </ResponsiveContainer>
+                    isMounted && (
+                        <ResponsiveContainer width="100%" height="100%" minWidth={0} minHeight={0}>
+                            <AreaChart
+                                data={data}
+                                margin={{ top: 10, right: 10, left: 0, bottom: 0 }}
+                            >
+                                <defs>
+                                    <linearGradient id="colorMrr" x1="0" y1="0" x2="0" y2="1">
+                                        <stop offset="5%" stopColor="#136dec" stopOpacity={0.3}/>
+                                        <stop offset="95%" stopColor="#136dec" stopOpacity={0}/>
+                                    </linearGradient>
+                                </defs>
+                                <CartesianGrid 
+                                    strokeDasharray="3 3" 
+                                    vertical={false} 
+                                    stroke="#f1f5f9" 
+                                    className="dark:stroke-slate-800"
+                                />
+                                <XAxis 
+                                    dataKey="name" 
+                                    axisLine={false}
+                                    tickLine={false}
+                                    tick={{ fill: '#94a3b8', fontSize: 12, fontWeight: 500 }}
+                                    dy={10}
+                                />
+                                <YAxis 
+                                    axisLine={false}
+                                    tickLine={false}
+                                    tick={{ fill: '#94a3b8', fontSize: 12, fontWeight: 500 }}
+                                    tickFormatter={(value) => `R$ ${(value / 1000).toFixed(0)}k`}
+                                    hide={typeof window !== 'undefined' && window.innerWidth < 768}
+                                />
+                                <Tooltip content={<CustomTooltip />} />
+                                <Area 
+                                    type="monotone" 
+                                    dataKey="mrr" 
+                                    stroke="#136dec" 
+                                    strokeWidth={4}
+                                    fillOpacity={1} 
+                                    fill="url(#colorMrr)" 
+                                    animationDuration={1500}
+                                    animationEasing="ease-in-out"
+                                />
+                            </AreaChart>
+                        </ResponsiveContainer>
+                    )
                 )}
             </div>
         </div>

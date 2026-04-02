@@ -3,15 +3,12 @@ import { sql } from "drizzle-orm";
 import { db } from "../lib/db";
 
 async function main() {
-  console.log(" Iniciando configuração das tabelas de Usuários e Permissões...");
 
   try {
     // 0. Garantir extensão pgcrypto para gen_random_uuid()
     try {
       await db.execute(sql`CREATE EXTENSION IF NOT EXISTS "pgcrypto";`);
-      console.log(" Extensão pgcrypto verificada/criada.");
     } catch {
-      console.log(" Nota: Falha ao garantir pgcrypto, gen_random_uuid() pode já estar disponível ou o usuário não tem permissão.");
     }
 
     // 1. Criar Tipo Enum para Roles
@@ -23,9 +20,7 @@ async function main() {
           WHEN duplicate_object THEN null;
         END $$;
       `);
-      console.log(" Tipo user_role_enum verificado/criado.");
     } catch {
-      console.log(" Nota: Tipo enum pode já existir.");
     }
 
     // 2. Criar tabela users
@@ -45,7 +40,6 @@ async function main() {
         CONSTRAINT users_email_key UNIQUE (tenant_id, email)
       );
     `);
-    console.log(" Tabela users verificada/criada.");
 
     // 3. Criar tabela user_permissions
     await db.execute(sql`
@@ -64,9 +58,7 @@ async function main() {
             ON UPDATE NO ACTION ON DELETE CASCADE
       );
     `);
-    console.log(" Tabela user_permissions verificada/criada.");
 
-    console.log(" Configuração de usuários concluída com sucesso!");
   } catch (error) {
     console.error(" Erro durante a configuração:", error);
     process.exit(1);

@@ -17,6 +17,12 @@ interface MetricCardProps {
 export const MetricCard: React.FC<MetricCardProps> = ({
     title, value, percentage, icon, color, blob, data, index
 }) => {
+    const [isMounted, setIsMounted] = React.useState(false);
+
+    React.useEffect(() => {
+        setIsMounted(true);
+    }, []);
+
     return (
         <div className="bg-white dark:bg-slate-900 border border-[#f1f5f9] dark:border-slate-800 p-6 rounded-[32px] shadow-[0_8px_30px_-6px_rgba(0,0,0,0.04)] hover:shadow-[0_15px_45px_-10px_rgba(0,0,0,0.08)] transition-all relative overflow-hidden group min-h-[175px] flex flex-col justify-between">
             {/* Blob decoration */}
@@ -39,8 +45,8 @@ export const MetricCard: React.FC<MetricCardProps> = ({
                 </div>
 
                 <div className="w-20 h-10 opacity-70 group-hover:opacity-100 transition-opacity">
-                    <ResponsiveContainer width="100%" height="100%">
-                        <AreaChart data={data}>
+                    {isMounted && (
+                        <AreaChart data={data} width={80} height={40}>
                             <defs>
                                 <linearGradient id={`colorSpark-${index}`} x1="0" y1="0" x2="0" y2="100%">
                                     <stop offset="5%" stopColor={color} stopOpacity={0.4} />
@@ -49,7 +55,7 @@ export const MetricCard: React.FC<MetricCardProps> = ({
                             </defs>
                             <Area type="monotone" dataKey="v" stroke={color} strokeWidth={2.5} fillOpacity={1} fill={`url(#colorSpark-${index})`} animationDuration={1500} />
                         </AreaChart>
-                    </ResponsiveContainer>
+                    )}
                 </div>
             </div>
         </div>

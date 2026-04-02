@@ -3,7 +3,6 @@ import { sql } from "drizzle-orm";
 import { db } from "../lib/db";
 
 async function main() {
-  console.log("🛠️ Running Support Tickets Migration (Add Requester)...");
 
   try {
     // 1. Add requester_id and requester_name columns if they don't exist
@@ -16,14 +15,12 @@ async function main() {
       END $$;
     `);
     
-    console.log("✅ Columns 'requester_id' and 'requester_name' verified/created successfully!");
 
   } catch (error) {
     console.error("❌ Error running migration:", error);
     process.exit(1);
   }
   
-  console.log("🚀 Migration completed successfully.");
   process.exit(0);
 }
 

@@ -3,6 +3,8 @@
 import React, { useState, useEffect, useMemo } from 'react';
 import { useApp } from '@/context/AppContext';
 import type { Appointment } from '@/types';
+import { AppointmentSidebar } from '@/components/business/appointments/AppointmentSidebar';
+import { AppointmentModal } from '@/components/business/appointments/AppointmentModal';
 
 const HOURS = Array.from({ length: 17 }, (_, i) => i + 7); // 7 AM to 11 PM
 
@@ -202,67 +204,24 @@ export default function AppointmentsPage() {
             </header>
 
             <div className="flex flex-1 overflow-hidden">
-                {/* LEFT SIDEBAR (Mini calendar & Categories) */}
-                <aside className="w-64 border-r border-slate-200 dark:border-slate-800 p-6 flex flex-col gap-8 overflow-y-auto bg-slate-50/50 dark:bg-slate-900/50 hidden lg:flex">
-                    <button onClick={() => {
+                <AppointmentSidebar
+                    onNewAppointment={() => {
                         setFormData({ title: '', date: new Date().toISOString(), durationHours: 1, color: 'bg-primary/20 text-primary border-primary/30', type: 'Remoto', status: 'Pendente', location: '', description: '', id: undefined });
                         setIsAddModalOpen(true);
-                    }} className="flex items-center justify-center gap-2 bg-primary hover:bg-blue-600 text-white p-3 rounded-2xl font-bold shadow-xl shadow-primary/20 transition-all active:scale-95">
-                        <span className="material-symbols-outlined">add</span>
-                        Novo Agendamento
-                    </button>
-
-                    <div>
-                        <div className="flex items-center w-full justify-between mb-4">
-                            <h2 className="text-sm font-black text-slate-900 dark:text-white capitalize">
-                                {new Date(currentDate).toLocaleString('default', { month: 'long' })} {currentDate.getFullYear()}
-                            </h2>
-                            <div className="flex gap-1">
-                                <span onClick={() => { setViewMode('Month'); navigateCalendar(-1); }} className="material-symbols-outlined text-[18px] text-slate-400 cursor-pointer hover:text-primary transition bg-slate-100 dark:bg-slate-800 p-0.5 rounded">chevron_left</span>
-                                <span onClick={() => { setViewMode('Month'); navigateCalendar(1); }} className="material-symbols-outlined text-[18px] text-slate-400 cursor-pointer hover:text-primary transition bg-slate-100 dark:bg-slate-800 p-0.5 rounded">chevron_right</span>
-                            </div>
-                        </div>
-                        {/* Mini Calendar Real */}
-                        <div className="grid grid-cols-7 gap-1 text-center text-[10px] font-bold text-slate-400 mb-2">
-                            <span>D</span><span>S</span><span>T</span><span>Q</span><span>Q</span><span>S</span><span>S</span>
-                        </div>
-                        <div className="grid grid-cols-7 gap-1 text-center text-[11px] text-slate-700 dark:text-slate-300 font-medium">
-                            {monthDays.map((md, i) => {
-                                const isCurrentSideMonth = md.getMonth() === currentDate.getMonth();
-                                const isToday = md.getDate() === new Date().getDate() && md.getMonth() === new Date().getMonth() && md.getFullYear() === new Date().getFullYear();
-                                return (
-                                    <div
-                                        key={i}
-                                        onClick={() => { setViewMode('Day'); setCurrentDate(md); }}
-                                        className={`p-1.5 rounded-full cursor-pointer hover:bg-slate-200 dark:hover:bg-slate-700 transition flex items-center justify-center 
-                                        ${isCurrentSideMonth ? '' : 'text-slate-300 dark:text-slate-600'}
-                                        ${isToday ? 'bg-primary text-white font-bold hover:bg-primary' : ''}`}
-                                    >
-                                        {md.getDate()}
-                                    </div>
-                                )
-                            })}
-                        </div>
-                    </div>
-
-                    <div>
-                        <h3 className="text-xs font-black uppercase tracking-widest text-slate-400 mb-4 flex items-center justify-between">Minhas Agendas <span className="material-symbols-outlined text-[16px]">expand_more</span></h3>
-                        <div className="space-y-3">
-                            <label className="flex items-center gap-3 text-sm font-bold text-slate-700 dark:text-slate-300 cursor-pointer group">
-                                <input type="checkbox" checked={filterSync} onChange={(e) => setFilterSync(e.target.checked)} className="w-4 h-4 rounded text-blue-500 border-slate-300 focus:ring-blue-500" />
-                                <span className="group-hover:text-primary transition">Sincronização Diária</span>
-                            </label>
-                            <label className="flex items-center gap-3 text-sm font-bold text-slate-700 dark:text-slate-300 cursor-pointer group">
-                                <input type="checkbox" checked={filterDeploy} onChange={(e) => setFilterDeploy(e.target.checked)} className="w-4 h-4 rounded text-emerald-500 border-slate-300 focus:ring-emerald-500" />
-                                <span className="group-hover:text-primary transition">Implantações</span>
-                            </label>
-                            <label className="flex items-center gap-3 text-sm font-bold text-slate-700 dark:text-slate-300 cursor-pointer group">
-                                <input type="checkbox" checked={filterTask} onChange={(e) => setFilterTask(e.target.checked)} className="w-4 h-4 rounded text-purple-500 border-slate-300 focus:ring-purple-500" />
-                                <span className="group-hover:text-primary transition">Tarefas Internas</span>
-                            </label>
-                        </div>
-                    </div>
-                </aside>
+                    }}
+                    currentDate={currentDate}
+                    setCurrentDate={setCurrentDate}
+                    viewMode={viewMode}
+                    setViewMode={setViewMode}
+                    monthDays={monthDays}
+                    navigateCalendar={navigateCalendar}
+                    filterSync={filterSync}
+                    setFilterSync={setFilterSync}
+                    filterDeploy={filterDeploy}
+                    setFilterDeploy={setFilterDeploy}
+                    filterTask={filterTask}
+                    setFilterTask={setFilterTask}
+                />
 
                 {/* INTERACTIVE CALENDAR GRIDS */}
                 <div className="flex-1 flex flex-col overflow-hidden relative bg-white dark:bg-slate-900">
@@ -393,140 +352,15 @@ export default function AppointmentsPage() {
                 </div>
             </div>
 
-            {/* FLOATING ACTION MODAL */}
-            {isAddModalOpen && (
-                <div className="fixed inset-0 z-[150] flex items-center justify-center lg:items-end lg:justify-end lg:pr-12 lg:pb-12 bg-slate-900/20 backdrop-blur-sm animate-fadeIn p-4">
-                    <div className="bg-white dark:bg-slate-900 w-full max-w-[400px] rounded-3xl shadow-2xl border border-slate-200 dark:border-slate-800 overflow-hidden animate-dropIn">
-                        <div className="p-5 border-b border-slate-100 dark:border-slate-800 flex justify-between items-center bg-slate-50 dark:bg-slate-950">
-                            <h3 className="font-black text-slate-800 dark:text-white">{formData.id ? 'Editar Agendamento' : 'Novo Agendamento'}</h3>
-                            <button onClick={() => setIsAddModalOpen(false)} className="text-slate-400 hover:text-slate-700 transition"><span className="material-symbols-outlined">close</span></button>
-                        </div>
-
-                        <div className="p-6 space-y-4">
-                            <div>
-                                <input
-                                    className="w-full text-lg font-bold text-slate-800 dark:text-white bg-transparent border-0 border-b-2 border-slate-200 dark:border-slate-700 focus:ring-0 focus:border-primary px-0 py-2 placeholder-slate-300"
-                                    placeholder="Adicionar título"
-                                    value={formData.title || ''}
-                                    autoFocus
-                                    onChange={e => setFormData({ ...formData, title: e.target.value })}
-                                />
-                            </div>
-
-                            <div className="flex items-center gap-4 text-sm font-medium text-slate-600 dark:text-slate-300 bg-slate-50 dark:bg-slate-800 p-3 rounded-xl border border-slate-100 dark:border-slate-700">
-                                <span className="material-symbols-outlined text-slate-400">calendar_month</span>
-                                <input
-                                    type="datetime-local"
-                                    className="bg-transparent border-none p-0 focus:ring-0 w-full text-sm font-bold"
-                                    value={formData.date ? formData.date.slice(0, 16) : ''}
-                                    onChange={e => {
-                                        if (e.target.value) {
-                                            const d = new Date(e.target.value);
-                                            setFormData({ ...formData, date: d.toISOString() });
-                                        }
-                                    }}
-                                />
-                            </div>
-
-                            <div className="grid grid-cols-2 gap-3">
-                                <div className="bg-slate-50 dark:bg-slate-800 p-3 rounded-xl border border-slate-100 dark:border-slate-700">
-                                    <label className="text-[10px] font-black uppercase tracking-widest text-slate-400 block mb-1">Duração (hs)</label>
-                                    <input
-                                        type="number" step="0.5"
-                                        className="bg-transparent border-none p-0 focus:ring-0 w-full text-sm font-bold h-6"
-                                        value={formData.durationHours || ''}
-                                        onChange={e => setFormData({ ...formData, durationHours: Number(e.target.value) })}
-                                    />
-                                </div>
-                                <div className="bg-slate-50 dark:bg-slate-800 p-3 rounded-xl border border-slate-100 dark:border-slate-700">
-                                    <label className="text-[10px] font-black uppercase tracking-widest text-slate-400 block mb-1">Status</label>
-                                    <select
-                                        className="bg-transparent border-none p-0 focus:ring-0 w-full text-sm font-bold h-6 appearance-none"
-                                        value={formData.status || ''}
-                                        onChange={e => setFormData({ ...formData, status: e.target.value as Appointment['status'] })}
-                                    >
-                                        <option>Pendente</option>
-                                        <option>Confirmado</option>
-                                        <option>Concluído</option>
-                                        <option>Cancelado</option>
-                                    </select>
-                                </div>
-                            </div>
-
-                            <div className="flex items-center gap-4 text-sm font-medium text-slate-600 dark:text-slate-300 border-b border-slate-100 dark:border-slate-800 pb-3">
-                                <span className="material-symbols-outlined text-slate-400">person_add</span>
-                                <input
-                                    type="text"
-                                    className="bg-transparent border-none p-0 focus:ring-0 w-full"
-                                    placeholder="Adicionar cliente convidado"
-                                    value={formData.clientName || ''}
-                                    onChange={e => setFormData({ ...formData, clientName: e.target.value })}
-                                />
-                            </div>
-
-                            <div className="flex items-center gap-4 text-sm font-medium text-slate-600 dark:text-slate-300 border-b border-slate-100 dark:border-slate-800 pb-3">
-                                <span className="material-symbols-outlined text-slate-400">link</span>
-                                <input
-                                    type="text"
-                                    className="bg-transparent border-none p-0 focus:ring-0 w-full text-blue-500 font-medium"
-                                    placeholder="Adicionar link de vídeo ou local..."
-                                    value={formData.location || ''}
-                                    onChange={e => setFormData({ ...formData, location: e.target.value })}
-                                />
-                            </div>
-
-                            <div className="flex items-center gap-4 text-sm font-medium text-slate-600 dark:text-slate-300 border-b border-slate-100 dark:border-slate-800 pb-3">
-                                <span className="material-symbols-outlined text-slate-400">confirmation_number</span>
-                                <select
-                                    className="bg-transparent border-none p-0 focus:ring-0 w-full font-medium appearance-none text-ellipsis overflow-hidden whitespace-nowrap"
-                                    value={formData.ticketId || ''}
-                                    onChange={e => setFormData({ ...formData, ticketId: e.target.value })}
-                                >
-                                    <option value="">(Opcional) Vincular a um Ticket Existent</option>
-                                    {tickets?.filter(t => t.status !== 'Closed').map(t => {
-                                        const displaySubject = t.subject.length > 20 ? t.subject.substring(0, 20) + '...' : t.subject;
-                                        const displayClient = t.clientName.length > 15 ? t.clientName.substring(0, 15) + '...' : t.clientName;
-                                        return (
-                                            <option key={t.id} value={t.id}>
-                                                [{t.id.slice(0, 6)}] {displaySubject} - {displayClient}
-                                            </option>
-                                        );
-                                    })}
-                                </select>
-                            </div>
-
-                            <div className="flex gap-4 border-b border-slate-100 dark:border-slate-800 pb-3 h-20">
-                                <span className="material-symbols-outlined text-slate-400 mt-1">notes</span>
-                                <textarea
-                                    className="bg-transparent border-none p-0 focus:ring-0 w-full resize-none text-sm h-full"
-                                    placeholder="Adicionar descrição"
-                                    value={formData.description || ''}
-                                    onChange={e => setFormData({ ...formData, description: e.target.value })}
-                                ></textarea>
-                            </div>
-
-                            <div className="flex gap-2">
-                                <button type="button" onClick={() => setFormData({ ...formData, color: 'bg-emerald-100 text-emerald-800 border-emerald-200' })} className={`w-6 h-6 rounded-full bg-emerald-400 focus:ring-2 ring-offset-2 ring-emerald-400 ${formData.color?.includes('emerald') ? 'ring-2' : ''}`}></button>
-                                <button type="button" onClick={() => setFormData({ ...formData, color: 'bg-blue-100 text-blue-800 border-blue-200' })} className={`w-6 h-6 rounded-full bg-blue-400 focus:ring-2 ring-offset-2 ring-blue-400 ${formData.color?.includes('blue') ? 'ring-2' : ''}`}></button>
-                                <button type="button" onClick={() => setFormData({ ...formData, color: 'bg-indigo-100 text-indigo-800 border-indigo-200' })} className={`w-6 h-6 rounded-full bg-indigo-400 focus:ring-2 ring-offset-2 ring-indigo-400 ${formData.color?.includes('indigo') ? 'ring-2' : ''}`}></button>
-                                <button type="button" onClick={() => setFormData({ ...formData, color: 'bg-purple-100 text-purple-800 border-purple-200' })} className={`w-6 h-6 rounded-full bg-purple-400 focus:ring-2 ring-offset-2 ring-purple-400 ${formData.color?.includes('purple') ? 'ring-2' : ''}`}></button>
-                                <button type="button" onClick={() => setFormData({ ...formData, color: 'bg-rose-100 text-rose-800 border-rose-200' })} className={`w-6 h-6 rounded-full bg-rose-400 focus:ring-2 ring-offset-2 ring-rose-400 ${formData.color?.includes('rose') ? 'ring-2' : ''}`}></button>
-                            </div>
-
-                        </div>
-
-                        <div className="p-5 bg-slate-50 dark:bg-slate-950/80 border-t border-slate-100 dark:border-slate-800 flex justify-between gap-3">
-                            {formData.id ? (
-                                <button onClick={() => handleDelete(formData.id!)} className="px-4 py-2 rounded-xl text-rose-600 bg-rose-50 hover:bg-rose-100 font-bold text-sm transition mr-auto">Excluir</button>
-                            ) : <div></div>}
-                            <div className="flex gap-2">
-                                <button onClick={() => setIsAddModalOpen(false)} className="px-6 py-2.5 rounded-xl text-slate-600 bg-white border border-slate-200 hover:bg-slate-50 font-bold text-sm transition">Cancelar</button>
-                                <button onClick={handleSave} className="px-8 py-2.5 rounded-xl text-white bg-slate-900 dark:bg-primary hover:bg-slate-800 dark:hover:bg-blue-600 shadow-xl shadow-slate-900/10 font-bold text-sm transition active:scale-95 disabled:opacity-50" disabled={!formData.title}>Salvar</button>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-            )}
+            <AppointmentModal
+                isOpen={isAddModalOpen}
+                onClose={() => setIsAddModalOpen(false)}
+                formData={formData}
+                setFormData={setFormData}
+                onSave={handleSave}
+                onDelete={handleDelete}
+                tickets={tickets}
+            />
 
             {/* ERROR MODAL (Retroactive Restriction) */}
             {showErrorModal && (

@@ -120,10 +120,6 @@ export const useContractsStore = create<ContractsState & ContractsActions>(
             : [savedContract, ...state.contracts],
           isCacheDirty: true,
         }));
-
-        console.log(
-          "[ContractsStore] Contrato salvo, cache marcado como dirty",
-        );
       } catch (error) {
         console.error("Erro ao salvar contrato:", error);
         set({ error: "Erro ao salvar contrato" });
@@ -135,7 +131,6 @@ export const useContractsStore = create<ContractsState & ContractsActions>(
 
     invalidateCache: () => {
       set({ isCacheDirty: true });
-      console.log("[ContractsStore] Cache invalidado manualmente");
     },
   }),
 );

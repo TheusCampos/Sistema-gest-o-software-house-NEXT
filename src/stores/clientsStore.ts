@@ -171,7 +171,6 @@ export const useClientsStore = create<ClientsState & ClientsActions>(
     // Método para invalidar cache manualmente
     invalidateCache: () => {
       set({ isCacheDirty: true });
-      console.log("[ClientsStore] Cache invalidado manualmente");
     },
   }),
 );

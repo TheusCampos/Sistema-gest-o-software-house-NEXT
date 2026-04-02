@@ -16,6 +16,15 @@ interface PriorityChartProps {
 }
 
 export const PriorityChart: React.FC<PriorityChartProps> = ({ data, total }) => {
+    const [isMounted, setIsMounted] = React.useState(false);
+
+    React.useEffect(() => {
+        const timer = setTimeout(() => {
+            setIsMounted(true);
+        }, 150);
+        return () => clearTimeout(timer);
+    }, []);
+
     return (
         <div className="lg:col-span-2 bg-white dark:bg-slate-900 border border-[#f1f5f9] dark:border-slate-800 p-10 rounded-[48px] shadow-[0_8px_30px_-6px_rgba(0,0,0,0.04)] flex flex-col">
             <div className="flex justify-between items-start mb-6">
@@ -30,36 +39,38 @@ export const PriorityChart: React.FC<PriorityChartProps> = ({ data, total }) => 
 
             <div className="flex-1 flex flex-col md:flex-row items-center justify-between gap-6">
                 {/* Chart Container */}
-                <div className="relative w-full aspect-square max-w-[280px] flex items-center justify-center">
+                <div className="relative w-full aspect-square max-w-[280px] flex items-center justify-center min-h-[280px]">
                     <div className="absolute inset-0 flex flex-col items-center justify-center pointer-events-none z-10">
                         <span className="text-[52px] font-bold text-[#0d131b] dark:text-white leading-none tracking-tighter">
                             {total}
                         </span>
                     </div>
 
-                    <ResponsiveContainer width="100%" height="100%">
-                        <PieChart>
-                            <Pie
-                                data={data}
-                                cx="50%"
-                                cy="50%"
-                                innerRadius="65%"
-                                outerRadius="95%"
-                                paddingAngle={8}
-                                dataKey="value"
-                                cornerRadius={12}
-                                stroke="none"
-                            >
-                                {data.map((entry, index) => (
-                                    <Cell key={`cell-${index}`} fill={entry.color} />
-                                ))}
-                            </Pie>
-                            <Tooltip
-                                contentStyle={{ borderRadius: '24px', border: 'none', boxShadow: '0 25px 50px -12px rgb(0 0 0 / 0.15)', backgroundColor: 'rgba(255, 255, 255, 0.98)', padding: '16px 24px' }}
-                                itemStyle={{ color: '#0f172a', fontWeight: 'bold', fontSize: '14px' }}
-                            />
-                        </PieChart>
-                    </ResponsiveContainer>
+                    {isMounted && total > 0 && (
+                        <ResponsiveContainer width="100%" height="99%" minWidth={0} minHeight={0}>
+                            <PieChart>
+                                <Pie
+                                    data={data}
+                                    cx="50%"
+                                    cy="50%"
+                                    innerRadius="65%"
+                                    outerRadius="95%"
+                                    paddingAngle={8}
+                                    dataKey="value"
+                                    cornerRadius={12}
+                                    stroke="none"
+                                >
+                                    {data.map((entry, index) => (
+                                        <Cell key={`cell-${index}`} fill={entry.color} />
+                                    ))}
+                                </Pie>
+                                <Tooltip
+                                    contentStyle={{ borderRadius: '24px', border: 'none', boxShadow: '0 25px 50px -12px rgb(0 0 0 / 0.15)', backgroundColor: 'rgba(255, 255, 255, 0.98)', padding: '16px 24px' }}
+                                    itemStyle={{ color: '#0f172a', fontWeight: 'bold', fontSize: '14px' }}
+                                />
+                            </PieChart>
+                        </ResponsiveContainer>
+                    )}
                 </div>
 
                 {/* Custom Legend */}

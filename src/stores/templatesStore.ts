@@ -105,7 +105,6 @@ export const useTemplatesStore = create<TemplatesState & TemplatesActions>((set,
         isCacheDirty: true
       }));
 
-      console.log('[TemplatesStore] Template salvo, cache marcado como dirty');
     } catch (error) {
       console.error('Erro ao salvar template:', error);
       throw error;
@@ -125,7 +124,6 @@ export const useTemplatesStore = create<TemplatesState & TemplatesActions>((set,
         isCacheDirty: true
       }));
 
-      console.log('[TemplatesStore] Template removido, cache marcado como dirty');
     } catch (error) {
       console.error('Erro ao excluir template:', error);
       throw error;
@@ -134,6 +132,5 @@ export const useTemplatesStore = create<TemplatesState & TemplatesActions>((set,
 
   invalidateCache: () => {
     set({ isCacheDirty: true });
-    console.log('[TemplatesStore] Cache invalidado manualmente');
   }
 }));

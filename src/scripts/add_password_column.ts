@@ -4,14 +4,12 @@ import { db } from "../lib/db";
 import { hashPassword } from "../lib/password";
 
 async function main() {
-    console.log(" Adicionando coluna de senha à tabela de usuários...");
 
     try {
         await db.execute(sql`
       ALTER TABLE public.users 
       ADD COLUMN IF NOT EXISTS password text DEFAULT '123456';
     `);
-        console.log(" Coluna 'password' adicionada/verificada com sucesso.");
 
         // Atualizar usuários existentes com uma senha padrão se estiver nula
         // Segurança: Usar hash ao invés de texto plano
@@ -19,9 +17,7 @@ async function main() {
         await db.execute(sql`
       UPDATE public.users SET password = ${defaultPasswordHash} WHERE password IS NULL;
     `);
-        console.log(" Senhas padrão definidas para usuários existentes.");
 
-        console.log(" Migração concluída!");
         process.exit(0);
     } catch (error) {
         console.error(" Erro durante a migração:", error);

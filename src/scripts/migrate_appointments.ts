@@ -3,7 +3,6 @@ import { sql } from "drizzle-orm";
 import { db } from "../lib/db";
 
 async function main() {
-    console.log("🛠️ Iniciando migration para tabela appointments...");
 
     try {
         await db.execute(sql`
@@ -37,7 +36,6 @@ async function main() {
           ON public.appointments (tenant_id, date);
         `);
 
-        console.log(" Migration concluída com sucesso!");
     } catch (e) {
         console.error(" Erro na migration:", e);
         process.exit(1);

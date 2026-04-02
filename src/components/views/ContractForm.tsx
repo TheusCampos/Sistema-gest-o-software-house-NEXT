@@ -12,6 +12,7 @@ import { useAuthStore } from '@/stores/authStore';
 import { CommissionProjection } from '@/components/business/contracts/CommissionProjection';
 import { ContractMinuta } from '@/components/business/contracts/ContractMinuta';
 import { RichTextEditor } from '@/components/business/tickets/RichTextEditor';
+import DatePickerField from '@/components/composite/DatePickerField';
 import type { Contract, ContractItem } from '@/types';
 
 interface ContractFormProps {
@@ -280,14 +281,18 @@ ${itemsListHtml}
                                         <option value="15">Dia 15</option>
                                     </select>
                                 </div>
-                                <div>
-                                    <label className={`${labelClass} h-8 flex items-end`}>Início Vigência</label>
-                                    <input disabled={readOnly} type="date" value={formData.startDate} onChange={e => handleInputChange('startDate', e.target.value)} className={`${inputClass} !px-3`} />
-                                </div>
-                                <div>
-                                    <label className={`${labelClass} h-8 flex items-end`}>Fim Vigência</label>
-                                    <input disabled={readOnly} type="date" value={formData.endDate} onChange={e => handleInputChange('endDate', e.target.value)} className={`${inputClass} !px-3`} />
-                                </div>
+                                <DatePickerField 
+                                    label="Início Vigência" 
+                                    value={formData.startDate || ''} 
+                                    onChange={val => handleInputChange('startDate', val)} 
+                                    disabled={readOnly} 
+                                />
+                                <DatePickerField 
+                                    label="Fim Vigência" 
+                                    value={formData.endDate || ''} 
+                                    onChange={val => handleInputChange('endDate', val)} 
+                                    disabled={readOnly} 
+                                />
                             </div>
 
                              {/* Itens */}

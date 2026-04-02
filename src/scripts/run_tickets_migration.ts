@@ -3,7 +3,6 @@ import { sql } from "drizzle-orm";
 import { db } from "../lib/db";
 
 async function main() {
-  console.log("�️ Running Support Tickets Migration...");
 
   try {
     // 1. Create Enums if not exist
@@ -15,9 +14,7 @@ async function main() {
           WHEN duplicate_object THEN null;
         END $$;
       `);
-      console.log(" Enum 'ticket_priority' verified/created.");
     } catch {
-      console.log(" Note: Enum 'ticket_priority' might already exist.");
     }
 
     try {
@@ -28,9 +25,7 @@ async function main() {
           WHEN duplicate_object THEN null;
         END $$;
       `);
-      console.log(" Enum 'ticket_status' verified/created.");
     } catch {
-      console.log(" Note: Enum 'ticket_status' might already exist.");
     }
 
     // 2. Create Table support_tickets
@@ -56,20 +51,17 @@ async function main() {
       );
     `);
     
-    console.log(" Table 'support_tickets' verified/created successfully!");
 
     // 3. Create Index for performance
     await db.execute(sql`
       CREATE INDEX IF NOT EXISTS idx_support_tickets_tenant_id ON public.support_tickets (tenant_id);
     `);
-    console.log(" Index on tenant_id created.");
 
   } catch (error) {
     console.error(" Error running migration:", error);
     process.exit(1);
   }
   
-  console.log("🚀 Migration completed successfully.");
   process.exit(0);
 }
 

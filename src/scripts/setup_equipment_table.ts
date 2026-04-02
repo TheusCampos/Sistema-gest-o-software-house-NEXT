@@ -3,7 +3,6 @@ import { sql } from "drizzle-orm";
 import { db } from "../lib/db";
 
 async function main() {
-    console.log(" Setting up Equipment table...");
 
     try {
         // 1. Create Enums if not exist
@@ -15,9 +14,7 @@ async function main() {
                     WHEN duplicate_object THEN null;
                 END $$;
             `);
-            console.log(" Enum 'equipment_type' verified/created.");
         } catch {
-            console.log(" Note: Enum 'equipment_type' might already exist.");
         }
 
         try {
@@ -28,9 +25,7 @@ async function main() {
                     WHEN duplicate_object THEN null;
                 END $$;
             `);
-            console.log(" Enum 'equipment_status' verified/created.");
         } catch {
-            console.log(" Note: Enum 'equipment_status' might already exist.");
         }
 
         // 2. Create Table
@@ -70,14 +65,12 @@ async function main() {
             ON UPDATE NO ACTION ON DELETE SET NULL
       );
     `);
-        console.log(" Table 'equipment' created or already exists.");
 
     } catch (err) {
         console.error(" Error creating table:", err);
         process.exit(1);
     }
 
-    console.log("🚀 Done.");
     process.exit(0);
 }
 

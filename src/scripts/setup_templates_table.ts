@@ -3,7 +3,6 @@ import { sql } from "drizzle-orm";
 import { db } from "../lib/db";
 
 async function main() {
-  console.log(" Iniciando configuração das tabelas de Roteiros de Implantação...");
 
   try {
     // 1. Criar Tipo Enum (se não existir)
@@ -15,9 +14,7 @@ async function main() {
           WHEN duplicate_object THEN null;
         END $$;
       `);
-      console.log(" Tipo system_type_enum verificado/criado.");
     } catch {
-      console.log(" Nota: Tipo enum pode já existir ou erro ao criar.");
     }
 
     // 2. Criar tabela implementation_templates
@@ -36,7 +33,6 @@ async function main() {
         CONSTRAINT implementation_templates_pkey PRIMARY KEY (tenant_id, id)
       );
     `);
-    console.log(" Tabela implementation_templates verificada/criada.");
 
     // 3. Criar tabela implementation_steps
     await db.execute(sql`
@@ -54,9 +50,7 @@ async function main() {
             ON UPDATE NO ACTION ON DELETE CASCADE
       );
     `);
-    console.log(" Tabela implementation_steps verificada/criada.");
 
-    console.log(" Configuração concluída com sucesso!");
   } catch (error) {
     console.error(" Erro durante a configuração:", error);
     process.exit(1);
