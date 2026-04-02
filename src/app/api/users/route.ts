@@ -157,54 +157,65 @@ export const POST = withAuth(async (request, session) => {
 
     const hashedPassword = hashPassword(body.password);
 
-    const result = await db.transaction(async (tx) => {
-        const userInsert = await tx.execute(sql`
-            INSERT INTO users (
-                tenant_id, id, name, email, password, role, avatar, active
-            ) VALUES (
-                ${session.tenantId},
-                ${body.id && body.id.includes("-") && body.id.length >= 36 ? body.id : sql`gen_random_uuid()`},
-                ${body.name},
-                ${body.email},
-                ${hashedPassword},
-                ${role.toLowerCase()}::user_role_enum,
-                ${body.avatar || ""},
-                ${body.active ?? true}
-            ) RETURNING id
-        `);
+    try {
+        const result = await db.transaction(async (tx) => {
+            const userInsert = await tx.execute(sql`
+                INSERT INTO users (
+                    tenant_id, id, name, email, password, role, avatar, active
+                ) VALUES (
+                    ${session.tenantId},
+                    ${body.id && body.id.includes("-") && body.id.length >= 36 ? body.id : sql`gen_random_uuid()`},
+                    ${body.name},
+                    ${body.email},
+                    ${hashedPassword},
+                    ${role.toLowerCase()}::user_role_enum,
+                    ${body.avatar || ""},
+                    ${body.active ?? true}
+                ) RETURNING id
+            `);
 
-        const userId = String(userInsert.rows[0].id);
+            const userId = String(userInsert.rows[0].id);
 
-        if (!isAdminRole(role)) {
-            const payloadPermissions = body.permissions || EMPTY_PERMISSIONS;
-            const modules = Object.keys(payloadPermissions) as Array<keyof UserPermissions>;
+            if (!isAdminRole(role)) {
+                const payloadPermissions = body.permissions || EMPTY_PERMISSIONS;
+                const modules = Object.keys(payloadPermissions) as Array<keyof UserPermissions>;
 
-            for (const permissionModule of modules) {
-                const p = payloadPermissions[permissionModule];
-                await tx.execute(sql`
-                    INSERT INTO user_permissions (
-                        tenant_id, user_id, module_name, can_view, can_create, can_edit, can_delete
-                    ) VALUES (
-                        ${session.tenantId}, ${userId}, ${permissionModule},
-                        ${p.view}, ${p.create}, ${p.edit}, ${p.delete}
-                    )
-                `);
+                for (const permissionModule of modules) {
+                    const p = payloadPermissions[permissionModule];
+                    if (!p) continue;
+                    await tx.execute(sql`
+                        INSERT INTO user_permissions (
+                            tenant_id, user_id, module_name, can_view, can_create, can_edit, can_delete
+                        ) VALUES (
+                            ${session.tenantId}, ${userId}, ${permissionModule},
+                            ${!!p.view}, ${!!p.create}, ${!!p.edit}, ${!!p.delete}
+                        )
+                    `);
+                }
             }
+
+            return {
+                id: userId,
+                tenantId: session.tenantId,
+                name: body.name,
+                email: body.email,
+                role,
+                avatar: body.avatar || "",
+                active: body.active ?? true,
+                permissions: isAdminRole(role) ? ADMIN_PERMISSIONS : body.permissions || EMPTY_PERMISSIONS,
+            } as User;
+        });
+
+        return NextResponse.json(result, { status: 201 });
+    } catch (e: any) {
+        console.error("DEBUG USER SAVE ERROR:", e);
+        const detail = e.detail || e.message || "Erro desconhecido";
+        // Se for erro de e-mail duplicado
+        if (detail.includes("users_email_key")) {
+            return NextResponse.json({ message: "Este e-mail já está em uso por outro usuário." }, { status: 409 });
         }
-
-        return {
-            id: userId,
-            tenantId: session.tenantId,
-            name: body.name,
-            email: body.email,
-            role,
-            avatar: body.avatar || "",
-            active: body.active ?? true,
-            permissions: isAdminRole(role) ? ADMIN_PERMISSIONS : body.permissions || EMPTY_PERMISSIONS,
-        } as User;
-    });
-
-    return NextResponse.json(result, { status: 201 });
+        return NextResponse.json({ message: "Erro ao salvar: " + detail }, { status: 500 });
+    }
 });
 
 export const PUT = withAuth(async (request, session) => {
@@ -220,65 +231,72 @@ export const PUT = withAuth(async (request, session) => {
         return NextResponse.json({ message: "ID e função são obrigatórios." }, { status: 400 });
     }
 
-    await db.transaction(async (tx) => {
-        if (body.password && body.password.trim().length > 0) {
-            await tx.execute(sql`
-                UPDATE users SET
-                    name = ${body.name},
-                    email = ${body.email},
-                    password = ${hashPassword(body.password.trim())},
-                    role = ${role.toLowerCase()}::user_role_enum,
-                    avatar = ${body.avatar || ""},
-                    active = ${body.active ?? true},
-                    updated_at = NOW()
-                WHERE id = ${body.id} AND tenant_id = ${session.tenantId}
-            `);
-        } else {
-            await tx.execute(sql`
-                UPDATE users SET
-                    name = ${body.name},
-                    email = ${body.email},
-                    role = ${role.toLowerCase()}::user_role_enum,
-                    avatar = ${body.avatar || ""},
-                    active = ${body.active ?? true},
-                    updated_at = NOW()
-                WHERE id = ${body.id} AND tenant_id = ${session.tenantId}
-            `);
-        }
-
-        await tx.execute(sql`
-            DELETE FROM user_permissions
-            WHERE user_id = ${body.id} AND tenant_id = ${session.tenantId}
-        `);
-
-        if (!isAdminRole(role)) {
-            const payloadPermissions = body.permissions || EMPTY_PERMISSIONS;
-            const modules = Object.keys(payloadPermissions) as Array<keyof UserPermissions>;
-
-            for (const permissionModule of modules) {
-                const p = payloadPermissions[permissionModule];
+    try {
+        await db.transaction(async (tx) => {
+            if (body.password && body.password.trim().length > 0) {
                 await tx.execute(sql`
-                    INSERT INTO user_permissions (
-                        tenant_id, user_id, module_name, can_view, can_create, can_edit, can_delete
-                    ) VALUES (
-                        ${session.tenantId}, ${body.id}, ${permissionModule},
-                        ${p.view}, ${p.create}, ${p.edit}, ${p.delete}
-                    )
+                    UPDATE users SET
+                        name = ${body.name},
+                        email = ${body.email},
+                        password = ${hashPassword(body.password.trim())},
+                        role = ${role.toLowerCase()}::user_role_enum,
+                        avatar = ${body.avatar || ""},
+                        active = ${body.active ?? true},
+                        updated_at = NOW()
+                    WHERE id = ${body.id} AND tenant_id = ${session.tenantId}
+                `);
+            } else {
+                await tx.execute(sql`
+                    UPDATE users SET
+                        name = ${body.name},
+                        email = ${body.email},
+                        role = ${role.toLowerCase()}::user_role_enum,
+                        avatar = ${body.avatar || ""},
+                        active = ${body.active ?? true},
+                        updated_at = NOW()
+                    WHERE id = ${body.id} AND tenant_id = ${session.tenantId}
                 `);
             }
-        }
-    });
 
-    return NextResponse.json({
-        id: body.id,
-        tenantId: session.tenantId,
-        name: body.name,
-        email: body.email,
-        role,
-        avatar: body.avatar || "",
-        active: body.active ?? true,
-        permissions: isAdminRole(role) ? ADMIN_PERMISSIONS : body.permissions || EMPTY_PERMISSIONS,
-    } as User);
+            await tx.execute(sql`
+                DELETE FROM user_permissions
+                WHERE user_id = ${body.id} AND tenant_id = ${session.tenantId}
+            `);
+
+            if (!isAdminRole(role)) {
+                const payloadPermissions = body.permissions || EMPTY_PERMISSIONS;
+                const modules = Object.keys(payloadPermissions) as Array<keyof UserPermissions>;
+
+                for (const permissionModule of modules) {
+                    const p = payloadPermissions[permissionModule];
+                    if (!p) continue;
+                    await tx.execute(sql`
+                        INSERT INTO user_permissions (
+                            tenant_id, user_id, module_name, can_view, can_create, can_edit, can_delete
+                        ) VALUES (
+                            ${session.tenantId}, ${body.id}, ${permissionModule},
+                            ${!!p.view}, ${!!p.create}, ${!!p.edit}, ${!!p.delete}
+                        )
+                    `);
+                }
+            }
+        });
+
+        return NextResponse.json({
+            id: body.id,
+            tenantId: session.tenantId,
+            name: body.name,
+            email: body.email,
+            role,
+            avatar: body.avatar || "",
+            active: body.active ?? true,
+            permissions: isAdminRole(role) ? ADMIN_PERMISSIONS : body.permissions || EMPTY_PERMISSIONS,
+        } as User);
+    } catch (e: any) {
+        console.error("DEBUG USER UPDATE ERROR:", e);
+        const detail = e.detail || e.message || "Erro desconhecido";
+        return NextResponse.json({ message: "Erro ao atualizar: " + detail }, { status: 500 });
+    }
 });
 
 export const DELETE = withAuth(async (request, session) => {

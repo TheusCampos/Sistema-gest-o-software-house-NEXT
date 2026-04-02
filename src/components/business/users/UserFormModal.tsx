@@ -134,9 +134,10 @@ export const UserFormModal: React.FC<UserFormModalProps> = ({
     try {
       await onSave(payload);
       onClose();
-    } catch (error) {
+    } catch (error: any) {
       console.error("Erro ao salvar usuário:", error);
-      alert("Erro ao salvar usuário");
+      const apiMessage = error.response?.data?.message || error.message || "Erro desconhecido";
+      alert("Erro ao salvar usuário: " + apiMessage);
     }
   };
 
