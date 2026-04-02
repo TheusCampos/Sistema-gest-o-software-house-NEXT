@@ -148,14 +148,13 @@ export const POST = withAuth(async (request, session) => {
         );
     }
 
-    if (!body.password || body.password.length < 6) {
-        return NextResponse.json(
-            { message: "Senha obrigatória com mínimo de 6 caracteres." },
-            { status: 400 },
-        );
+    if (!body.name || !body.email || !body.password) {
+        return NextResponse.json({ message: "Dados incompletos." }, { status: 400 });
     }
 
     const hashedPassword = hashPassword(body.password);
+    const userId = body.id && body.id.includes("-") && body.id.length >= 36 ? body.id : null;
+    const finalRole = role.trim().toLowerCase();
 
     try {
         const result = await db.transaction(async (tx) => {
@@ -164,19 +163,19 @@ export const POST = withAuth(async (request, session) => {
                     tenant_id, id, name, email, password, role, avatar, active
                 ) VALUES (
                     ${session.tenantId},
-                    ${body.id && body.id.includes("-") && body.id.length >= 36 ? body.id : sql`gen_random_uuid()`},
-                    ${body.name},
-                    ${body.email},
+                    ${userId ? userId : sql`gen_random_uuid()`},
+                    ${body.name!.trim()},
+                    ${body.email!.trim().toLowerCase()},
                     ${hashedPassword},
-                    ${role.toLowerCase()}::user_role_enum,
+                    ${finalRole}::user_role_enum,
                     ${body.avatar || null},
                     ${body.active ?? true}
                 ) RETURNING id
             `);
 
-            const userId = String(userInsert.rows[0].id);
+            const insertedId = String(userInsert.rows[0].id);
 
-            if (!isAdminRole(role)) {
+            if (!isAdminRole(finalRole)) {
                 const payloadPermissions = body.permissions || EMPTY_PERMISSIONS;
                 const modules = Object.keys(payloadPermissions) as Array<keyof UserPermissions>;
 
@@ -187,7 +186,7 @@ export const POST = withAuth(async (request, session) => {
                         INSERT INTO user_permissions (
                             tenant_id, user_id, module_name, can_view, can_create, can_edit, can_delete
                         ) VALUES (
-                            ${session.tenantId}, ${userId}, ${permissionModule},
+                            ${session.tenantId}, ${insertedId}, ${permissionModule},
                             ${!!p.view}, ${!!p.create}, ${!!p.edit}, ${!!p.delete}
                         )
                     `);
@@ -195,28 +194,35 @@ export const POST = withAuth(async (request, session) => {
             }
 
             return {
-                id: userId,
+                id: insertedId,
                 tenantId: session.tenantId,
                 name: body.name,
                 email: body.email,
-                role,
+                role: finalRole as User["role"],
                 avatar: body.avatar || "",
                 active: body.active ?? true,
-                permissions: isAdminRole(role) ? ADMIN_PERMISSIONS : body.permissions || EMPTY_PERMISSIONS,
+                permissions: isAdminRole(finalRole) ? ADMIN_PERMISSIONS : body.permissions || EMPTY_PERMISSIONS,
             } as User;
         });
 
         return NextResponse.json(result, { status: 201 });
     } catch (e: any) {
-        console.error("DEBUG USER SAVE ERROR:", e);
-        const detail = e.detail || e.message || "Erro desconhecido";
-        // Se for erro de e-mail duplicado
-        if (detail.includes("users_email_key")) {
-            return NextResponse.json({ message: "Este e-mail já está em uso por outro usuário." }, { status: 409 });
+        console.error("CRITICAL USER SAVE ERROR:", e);
+        
+        // Log detalhado para o servidor
+        const pgDetail = e.detail || "";
+        const pgHint = e.hint || "";
+        const message = e.message || "Erro desconhecido";
+        
+        if (message.includes("users_email_key") || pgDetail.includes("already exists")) {
+            return NextResponse.json({ message: "Este e-mail já está em uso neste sistema." }, { status: 409 });
         }
-        // Retornar a mensagem completa do erro para debugar no frontend se necessário
-        const errorMessage = e.message || e.toString();
-        return NextResponse.json({ message: "Erro ao salvar: " + (detail !== errorMessage ? detail + " (" + errorMessage + ")" : detail) }, { status: 500 });
+        
+        return NextResponse.json({ 
+            message: "Erro ao salvar: " + message, 
+            detail: pgDetail,
+            hint: pgHint
+        }, { status: 500 });
     }
 });
 
