@@ -11,12 +11,15 @@ const DeleteModal = dynamic(() => import('@/components/business/DeleteClientModa
 import StatCard from '@/components/composite/StatCard';
 
 const ClientsList: React.FC = () => {
-    const { clients, saveClient, fetchClients, isClientsLoading } = useApp();
+    const { clients, saveClient, fetchClients, isClientsLoading, currentUser } = useApp();
+    
+    const isPrivileged = currentUser?.role === 'admin' || currentUser?.role === 'desenvolvedor';
     // ... (removed my previous comment block)
     // Carrega os clientes ao montar o componente
     useEffect(() => {
-        fetchClients('default');
-    }, [fetchClients]);
+        const tenant = currentUser?.tenantId || 'default';
+        fetchClients(tenant, isPrivileged);
+    }, [fetchClients, currentUser, isPrivileged]);
 
 
 
@@ -39,6 +42,10 @@ const ClientsList: React.FC = () => {
     });
     // Motivo obrigatório (mínimo de caracteres) para registrar a desativação
     const [deleteReason, setDeleteReason] = useState('');
+
+    // Filtros de visualização
+    const [showInactive, setShowInactive] = useState(false);
+    const [statusFilter, setStatusFilter] = useState<'all' | 'active' | 'blocked' | 'trial' | 'suspended' | 'deleted'>('all');
 
     // Debounce da busca: aguarda 300ms após parar de digitar
     useEffect(() => {
@@ -112,15 +119,34 @@ const ClientsList: React.FC = () => {
         }
     };
 
-    // Filtra apenas clientes ativos + aplica busca por razão social, id, documento e email
-    const filteredClients = clients.filter(client =>
-        client.active && (
+    // Filtra clientes com base na busca E nos filtros de status/atividade
+    const filteredClients = clients.filter(client => {
+        // Primeiro: Filtro de busca textual
+        const matchesSearch = 
             client.general.razao?.toLowerCase().includes(searchTerm.toLowerCase()) ||
             client.id.toLowerCase().includes(searchTerm.toLowerCase()) ||
             client.general.documento?.includes(searchTerm) ||
-            client.general.email?.toLowerCase().includes(searchTerm.toLowerCase())
-        )
-    );
+            client.general.email?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+            client.general.fantasia?.toLowerCase().includes(searchTerm.toLowerCase());
+
+        if (!matchesSearch) return false;
+
+        // Segundo: Filtro de Status
+        const label = getClientStatusLabel(client);
+        
+        if (statusFilter === 'all') {
+            // Se não filtrar por status, respeita apenas o toggle de inativos
+            return showInactive ? true : client.active;
+        }
+
+        if (statusFilter === 'active') return client.active && label === 'Ativo';
+        if (statusFilter === 'blocked') return client.active && label === 'Bloqueado';
+        if (statusFilter === 'trial') return client.active && label === 'Trial';
+        if (statusFilter === 'suspended') return client.active && label === 'Suspenso';
+        if (statusFilter === 'deleted') return !client.active;
+
+        return true;
+    });
 
     // Ref e setup pro Virtualizer (React Virtual)
     const parentRef = useRef<HTMLDivElement>(null);
@@ -177,7 +203,35 @@ const ClientsList: React.FC = () => {
                             </div>
                         )}
                     </div>
+                    
+                    <div className="flex flex-wrap gap-2 w-full md:w-auto px-2">
+                        {[
+                            { id: 'all', label: 'Todos' },
+                            { id: 'active', label: 'Ativos' },
+                            { id: 'blocked', label: 'Bloqueados' },
+                            { id: 'suspended', label: 'Suspensos' },
+                            { id: 'deleted', label: 'Inativos' }
+                        ].map(f => (
+                            <button
+                                key={f.id}
+                                onClick={() => setStatusFilter(f.id as any)}
+                                className={`px-4 py-2 rounded-xl text-xs font-black uppercase tracking-widest transition-all ${statusFilter === f.id ? 'bg-primary text-white shadow-lg shadow-primary/20' : 'bg-slate-100 dark:bg-slate-800 text-slate-500 hover:bg-slate-200 dark:hover:bg-slate-700'}`}
+                            >
+                                {f.label}
+                            </button>
+                        ))}
+                    </div>
+
                     <div className="flex gap-3 w-full md:w-auto relative">
+                        <button 
+                            onClick={() => setShowInactive(!showInactive)} 
+                            className={`flex-1 md:flex-none flex items-center justify-center gap-2 px-6 py-4 rounded-2xl text-sm font-bold border transition-all ${showInactive ? 'bg-amber-500 text-white border-amber-500' : 'bg-white dark:bg-slate-900 border-slate-200 dark:border-slate-800 text-slate-600 dark:text-slate-300'}`}
+                            title="Mostrar/Ocultar clientes marcados como excluídos"
+                        >
+                            <span className="material-symbols-outlined">{showInactive ? 'visibility' : 'visibility_off'}</span>
+                            {showInactive ? 'Ocultar Inativos' : 'Ver Inativos'}
+                        </button>
+
                         <button onClick={() => setShowColumnMenu(!showColumnMenu)} className={`flex-1 md:flex-none flex items-center justify-center gap-2 px-6 py-4 rounded-2xl text-sm font-bold border transition-all ${showColumnMenu ? 'bg-primary text-white border-primary' : 'bg-white dark:bg-slate-900 border-slate-200 dark:border-slate-800 text-slate-600 dark:text-slate-300'}`}>
                             <span className="material-symbols-outlined">settings_input_component</span>
                             Colunas

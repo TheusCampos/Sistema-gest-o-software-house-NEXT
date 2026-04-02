@@ -26,8 +26,8 @@ type ClientsState = {
  * Define as ações para manipular a lista de clientes.
  */
 type ClientsActions = {
-  fetchClients: (tenantId?: string) => Promise<void>;
-  forceRefresh: (tenantId?: string) => Promise<void>;
+  fetchClients: (tenantId?: string, allTenants?: boolean) => Promise<void>;
+  forceRefresh: (tenantId?: string, allTenants?: boolean) => Promise<void>;
   saveClient: (client: Client) => Promise<void>;
   loadClientDetail: (id: string) => Promise<Client | null>;
   invalidateCache: () => void;
@@ -45,7 +45,7 @@ export const useClientsStore = create<ClientsState & ClientsActions>(
     lastFetchTime: null,
     isCacheDirty: false,
 
-    fetchClients: async (tenantId?: string) => {
+    fetchClients: async (tenantId?: string, allTenants?: boolean) => {
       const now = Date.now();
       const CACHE_TTL_MS = 5 * 60 * 1000; // 5 minutos
       const isStale = !get().lastFetchTime || (now - get().lastFetchTime! > CACHE_TTL_MS);
@@ -62,9 +62,13 @@ export const useClientsStore = create<ClientsState & ClientsActions>(
       }
 
       try {
-        const url = tenantId
+        let url = tenantId
           ? `/api/clients?tenantId=${tenantId}`
           : "/api/clients";
+          
+        if (allTenants) {
+            url += (url.includes('?') ? '&' : '?') + 'allTenants=true';
+        }
 
         // Removemos { cache: "no-store" } para usar cache HTTP padrão caso servidor retorne headers
         const response = await fetch(url);
@@ -102,9 +106,9 @@ export const useClientsStore = create<ClientsState & ClientsActions>(
     },
 
     // Força atualização ignorando cache
-    forceRefresh: async (tenantId?: string) => {
+    forceRefresh: async (tenantId?: string, allTenants?: boolean) => {
       set({ isInitialized: false, lastFetchTime: null, isCacheDirty: false });
-      return get().fetchClients(tenantId);
+      return get().fetchClients(tenantId, allTenants);
     },
 
     // Salva cliente e marca cache como sujo

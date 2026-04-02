@@ -22,8 +22,8 @@ interface AppContextType {
     // Data
     clients: Client[];
     saveClient: (client: Client) => Promise<void>;
-    fetchClients: (tenantId?: string) => Promise<void>;
-    forceRefreshClients: (tenantId?: string) => Promise<void>;
+    fetchClients: (tenantId?: string, allTenants?: boolean) => Promise<void>;
+    forceRefreshClients: (tenantId?: string, allTenants?: boolean) => Promise<void>;
     isClientsLoading: boolean;
 
     sellers: Seller[];

@@ -12,9 +12,10 @@ import { withAuth } from "@/lib/api-wrapper";
 // GET /api/clients — listagem resumida
 export const GET = withAuth(async (request, _session) => {
   const { searchParams } = new URL(request.url);
-  const limit = parseInt(searchParams.get('limit') || '50', 10);
+  const limit = parseInt(searchParams.get('limit') || '5000', 10);
   const offset = parseInt(searchParams.get('offset') || '0', 10);
   const tenantIdParam = searchParams.get('tenantId') || 'default';
+  const allTenants = searchParams.get('allTenants') === 'true';
 
   const result = await db.execute(sql`
       SELECT
@@ -26,8 +27,7 @@ export const GET = withAuth(async (request, _session) => {
       LEFT JOIN client_general_info  g ON g.tenant_id = c.tenant_id AND g.client_id = c.id
       LEFT JOIN client_status_info   s ON s.tenant_id = c.tenant_id AND s.client_id = c.id
       LEFT JOIN client_address_info  a ON a.tenant_id = c.tenant_id AND a.client_id = c.id
-      WHERE c.tenant_id = ${tenantIdParam} 
-        AND c.active = true
+      WHERE (c.tenant_id = ${tenantIdParam} OR ${allTenants})
       ORDER BY g.razao
       LIMIT ${limit} OFFSET ${offset}
     `);
@@ -179,10 +179,17 @@ export const POST = withAuth(async (request, session) => {
     });
 
     return NextResponse.json(newClient, { status: 201 });
-  } catch (error: any) {
-    console.error("DEBUG CLIENT SAVE ERROR:", error);
-    const detail = error.detail || error.message || "Erro desconhecido";
-    return NextResponse.json({ message: "Erro ao salvar cliente: " + detail }, { status: 500 });
+    } catch (error: any) {
+    console.error("CRITICAL CLIENT SAVE ERROR:", error);
+    const pgDetail = error.detail || "";
+    const pgHint = error.hint || "";
+    const message = error.message || "Erro desconhecido";
+    
+    return NextResponse.json({ 
+        message: "Erro no banco ao salvar cliente: " + message, 
+        detail: pgDetail,
+        hint: pgHint
+    }, { status: 500 });
   }
 });
 
@@ -268,9 +275,16 @@ export const PUT = withAuth(async (request, session) => {
 
     return NextResponse.json(parsedData);
   } catch (error: any) {
-    console.error("DEBUG CLIENT UPDATE ERROR:", error);
-    const detail = error.detail || error.message || "Erro desconhecido";
-    return NextResponse.json({ message: "Erro ao atualizar cliente: " + detail }, { status: 500 });
+    console.error("CRITICAL CLIENT UPDATE ERROR:", error);
+    const pgDetail = error.detail || "";
+    const pgHint = error.hint || "";
+    const message = error.message || "Erro desconhecido";
+    
+    return NextResponse.json({ 
+        message: "Erro no banco ao atualizar cliente: " + message, 
+        detail: pgDetail,
+        hint: pgHint
+    }, { status: 500 });
   }
 });
 

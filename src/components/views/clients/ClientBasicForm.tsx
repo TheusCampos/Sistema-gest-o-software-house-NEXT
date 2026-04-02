@@ -44,11 +44,11 @@ export function ClientBasicForm({ data, address, onChangeGeneral, onChangeAddres
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                 <div className="space-y-2">
                     <label className="text-sm font-bold">Razão Social</label>
-                    <input disabled={readOnly} type="text" value={data.razao} onChange={e => onChangeGeneral('razao', e.target.value)} className={inputClass} />
+                    <input disabled={readOnly} type="text" value={data.razao} maxLength={150} onChange={e => onChangeGeneral('razao', e.target.value)} className={inputClass} />
                 </div>
                 <div className="space-y-2">
                     <label className="text-sm font-bold">Nome Fantasia</label>
-                    <input disabled={readOnly} type="text" value={data.fantasia || ''} onChange={e => onChangeGeneral('fantasia', e.target.value)} className={inputClass} />
+                    <input disabled={readOnly} type="text" value={data.fantasia || ''} maxLength={100} onChange={e => onChangeGeneral('fantasia', e.target.value)} className={inputClass} />
                 </div>
                 <div className="space-y-2">
                     <label className="text-sm font-bold">Tipo Pessoa</label>
@@ -59,7 +59,18 @@ export function ClientBasicForm({ data, address, onChangeGeneral, onChangeAddres
                 </div>
                 <div className="space-y-2">
                     <label className="text-sm font-bold">{data.tipoPessoa === 'Juridica' ? 'CNPJ' : 'CPF'}</label>
-                    <input disabled={readOnly} type="text" value={data.documento} onChange={e => onChangeGeneral('documento', e.target.value)} className={inputClass} />
+                    <input 
+                        disabled={readOnly} 
+                        type="text" 
+                        value={data.documento} 
+                        maxLength={18}
+                        placeholder={data.tipoPessoa === 'Juridica' ? '00.000.000/0000-00' : '000.000.000-00'}
+                        onChange={e => {
+                            const val = e.target.value.replace(/[^0-9.\-\/]/g, '');
+                            onChangeGeneral('documento', val);
+                        }} 
+                        className={inputClass} 
+                    />
                 </div>
                 <div className="space-y-2">
                     <label className="text-sm font-bold">{data.tipoPessoa === 'Juridica' ? 'Inscrição Estadual' : 'RG'}</label>
@@ -133,15 +144,26 @@ export function ClientBasicForm({ data, address, onChangeGeneral, onChangeAddres
                 <div className="md:col-span-2 space-y-2">
                     <label className="text-sm font-bold">CEP</label>
                     <div className="flex gap-2">
-                        <input disabled={readOnly} type="text" value={address.cep} onChange={e => onChangeAddress('cep', e.target.value)} className={inputClass} />
+                        <input 
+                            disabled={readOnly} 
+                            type="text" 
+                            value={address.cep} 
+                            maxLength={9}
+                            placeholder="00000-000"
+                            onChange={e => {
+                                const val = e.target.value.replace(/[^0-9\-]/g, '');
+                                onChangeAddress('cep', val);
+                            }} 
+                            className={inputClass} 
+                        />
                         <button type="button" onClick={searchCep} className="bg-slate-100 px-3 rounded-lg"><span className="material-symbols-outlined">search</span></button>
                     </div>
                 </div>
-                <div className="md:col-span-4 space-y-2"><label className="text-sm font-bold">Logradouro</label><input disabled={readOnly} type="text" value={address.logradouro} onChange={e => onChangeAddress('logradouro', e.target.value)} className={inputClass} /></div>
-                <div className="md:col-span-1 space-y-2"><label className="text-sm font-bold">Nº</label><input disabled={readOnly} type="text" value={address.numero} onChange={e => onChangeAddress('numero', e.target.value)} className={inputClass} /></div>
-                <div className="md:col-span-3 space-y-2"><label className="text-sm font-bold">Bairro</label><input disabled={readOnly} type="text" value={address.bairro} onChange={e => onChangeAddress('bairro', e.target.value)} className={inputClass} /></div>
-                <div className="md:col-span-2 space-y-2"><label className="text-sm font-bold">Complemento</label><input disabled={readOnly} type="text" value={address.complemento || ''} onChange={e => onChangeAddress('complemento', e.target.value)} className={inputClass} /></div>
-                <div className="md:col-span-3 space-y-2"><label className="text-sm font-bold">Cidade</label><input disabled={readOnly} type="text" value={address.cidade} onChange={e => onChangeAddress('cidade', e.target.value)} className={inputClass} /></div>
+                <div className="md:col-span-4 space-y-2"><label className="text-sm font-bold">Logradouro</label><input disabled={readOnly} type="text" value={address.logradouro} maxLength={100} onChange={e => onChangeAddress('logradouro', e.target.value)} className={inputClass} /></div>
+                <div className="md:col-span-1 space-y-2"><label className="text-sm font-bold">Nº</label><input disabled={readOnly} type="text" value={address.numero} maxLength={10} onChange={e => onChangeAddress('numero', e.target.value)} className={inputClass} /></div>
+                <div className="md:col-span-3 space-y-2"><label className="text-sm font-bold">Bairro</label><input disabled={readOnly} type="text" value={address.bairro} maxLength={50} onChange={e => onChangeAddress('bairro', e.target.value)} className={inputClass} /></div>
+                <div className="md:col-span-2 space-y-2"><label className="text-sm font-bold">Complemento</label><input disabled={readOnly} type="text" value={address.complemento || ''} maxLength={100} onChange={e => onChangeAddress('complemento', e.target.value)} className={inputClass} /></div>
+                <div className="md:col-span-3 space-y-2"><label className="text-sm font-bold">Cidade</label><input disabled={readOnly} type="text" value={address.cidade} maxLength={50} onChange={e => onChangeAddress('cidade', e.target.value)} className={inputClass} /></div>
                 <div className="md:col-span-2 space-y-2">
                     <label className="text-sm font-bold">UF</label>
                     <select

@@ -235,6 +235,7 @@ export const UserForm: React.FC<UserFormProps> = ({
                 <input
                   {...register("name")}
                   disabled={isReadOnly}
+                  maxLength={100}
                   className={`w-full rounded-2xl border ${errors.name ? 'border-red-500' : 'border-slate-200 dark:border-slate-700'} bg-slate-50 dark:bg-slate-800 px-5 py-4 focus:ring-4 focus:ring-primary/10 outline-none text-base font-bold transition-all`}
                   placeholder="Ex: João da Silva"
                 />
@@ -249,6 +250,7 @@ export const UserForm: React.FC<UserFormProps> = ({
                   {...register("email")}
                   disabled={isReadOnly}
                   type="email"
+                  maxLength={100}
                   className={`w-full rounded-2xl border ${errors.email ? 'border-red-500' : 'border-slate-200 dark:border-slate-700'} bg-slate-50 dark:bg-slate-800 px-5 py-4 focus:ring-4 focus:ring-primary/10 outline-none text-base font-bold transition-all`}
                   placeholder="email@empresa.com"
                 />

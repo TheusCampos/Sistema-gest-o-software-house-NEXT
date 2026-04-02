@@ -117,11 +117,14 @@ export default function ClientForm({ clientId, readOnly = false }: ClientFormPro
 
             await saveClient(clientObj);
             router.push('/clients');
-        } catch (error: unknown) {
+        } catch (error: any) {
             console.error("Failed to save client:", error);
-            // Mostra a mensagem do erro (agora pode conter detalhes de validação do backend)
-            const message = error instanceof Error ? error.message : "Falha ao salvar. Tente novamente.";
-            setErrorMsg(message);
+            const data = error.response?.data;
+            const apiMessage = data?.message || error.message || "Falha ao salvar.";
+            const detail = data?.detail ? `\nDetalhe: ${data.detail}` : "";
+            const hint = data?.hint ? `\nDica: ${data.hint}` : "";
+            
+            setErrorMsg(`Erro ao salvar cliente: ${apiMessage}${detail}${hint}`);
         } finally {
             setLoading(false);
         }

@@ -21,7 +21,7 @@ export const generalSchema = z.object({
     fantasia: z.string().nullish(),
     tipoPessoa: z.enum(['Juridica', 'Fisica']),
     documento: z.string()
-        .refine(validateCnpjOrCpf, { message: 'CNPJ ou CPF inválido' }),
+        .refine(validateCnpjOrCpf, { message: 'Documento deve ter 11 (CPF) ou 14 (CNPJ) dígitos numéricos' }),
     inscricaoEstadualRg: z.string().nullish(),
     dataAbertura: z.string().nullish(),
     email: z.string().email('E-mail inválido'),
