@@ -120,10 +120,11 @@ export async function POST(request: NextRequest) {
         const response = NextResponse.json(user);
         setSessionCookie(response, token, remember);
         return response;
-    } catch (error: any) {
+    } catch (error: unknown) {
         console.error("Erro no login:", error);
+        const errorMessage = error instanceof Error ? error.message : "Erro interno";
         return NextResponse.json(
-            { message: "Server Error: " + (error?.message || "Erro interno") },
+            { message: "Server Error: " + errorMessage },
             { status: 500 }
         );
     }

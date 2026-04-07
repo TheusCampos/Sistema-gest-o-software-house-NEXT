@@ -25,18 +25,20 @@ async function run() {
                     ALTER TYPE public.user_role_enum ADD VALUE IF NOT EXISTS ${role};
                 `);
                 console.log(`- Papel '${role}' verificado/adicionado.`);
-            } catch (e: any) {
-                if (e.message.includes('already exists')) {
+            } catch (e: unknown) {
+                const error = e as { message?: string };
+                if (error.message?.includes('already exists')) {
                     console.log(`- Papel '${role}' já existe.`);
                 } else {
-                    console.error(`- Erro ao adicionar papel '${role}':`, e.message);
+                    console.error(`- Erro ao adicionar papel '${role}':`, error.message);
                 }
             }
         }
         
         console.log("Migração de Enums finalizada com sucesso.");
         process.exit(0);
-    } catch (error: any) {
+    } catch (err: unknown) {
+        const error = err as { message?: string; detail?: string };
         console.error("Erro crítico na migração de Enums:", error.message);
         if (error.detail) console.error("Detalhes:", error.detail);
         process.exit(1);

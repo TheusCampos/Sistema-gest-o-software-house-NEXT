@@ -117,12 +117,13 @@ export default function ClientForm({ clientId, readOnly = false }: ClientFormPro
 
             await saveClient(clientObj);
             router.push('/clients');
-        } catch (error: any) {
-            console.error("Failed to save client:", error);
-            const data = error.response?.data;
-            const apiMessage = data?.message || error.message || "Falha ao salvar.";
-            const detail = data?.detail ? `\nDetalhe: ${data.detail}` : "";
-            const hint = data?.hint ? `\nDica: ${data.hint}` : "";
+        } catch (err: unknown) {
+            console.error("Failed to save client:", err);
+            const error = err as { response?: { data?: { message?: string; detail?: string; hint?: string } }; message?: string };
+            const apiData = error.response?.data;
+            const apiMessage = apiData?.message || error.message || "Falha ao salvar.";
+            const detail = apiData?.detail ? `\nDetalhe: ${apiData.detail}` : "";
+            const hint = apiData?.hint ? `\nDica: ${apiData.hint}` : "";
             
             setErrorMsg(`Erro ao salvar cliente: ${apiMessage}${detail}${hint}`);
         } finally {

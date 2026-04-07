@@ -159,12 +159,13 @@ export const UserForm: React.FC<UserFormProps> = ({
       }
 
       router.push("/pages/users");
-    } catch (error: any) {
-      console.error("Erro ao salvar usuário:", error);
-      const data = error.response?.data;
-      const apiMessage = data?.message || error.message || "Erro desconhecido";
-      const detail = data?.detail ? `\nDetalhe: ${data.detail}` : "";
-      const hint = data?.hint ? `\nDica: ${data.hint}` : "";
+    } catch (err: unknown) {
+      console.error("Erro ao salvar usuário:", err);
+      const error = err as { response?: { data?: { message?: string; detail?: string; hint?: string } }; message?: string };
+      const apiData = error.response?.data;
+      const apiMessage = apiData?.message || error.message || "Erro desconhecido";
+      const detail = apiData?.detail ? `\nDetalhe: ${apiData.detail}` : "";
+      const hint = apiData?.hint ? `\nDica: ${apiData.hint}` : "";
       
       alert(`Erro ao salvar usuário: ${apiMessage}${detail}${hint}`);
     }

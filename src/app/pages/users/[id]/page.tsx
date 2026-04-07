@@ -1,6 +1,6 @@
 'use client';
 import { useParams, useSearchParams } from 'next/navigation';
-import { useEffect, useState } from 'react';
+import { useEffect } from 'react';
 import { UserForm } from '@/components/business/users/UserForm';
 import { useUsersStore } from '@/stores/usersStore';
 import { useAuthStore } from '@/stores/authStore';
@@ -13,7 +13,6 @@ export default function EditUserPage() {
     
     const { users, saveUser, fetchUsers } = useUsersStore();
     const currentUser = useAuthStore(s => s.currentUser);
-    const [user, setUser] = useState<User | null>(null);
 
     useEffect(() => {
         if (currentUser?.tenantId && users.length === 0) {
@@ -21,12 +20,7 @@ export default function EditUserPage() {
         }
     }, [currentUser, users.length, fetchUsers]);
 
-    useEffect(() => {
-        const found = users.find(u => u.id === params.id);
-        if (found) {
-            setUser(found);
-        }
-    }, [params.id, users]);
+    const user = users.find(u => u.id === params.id) || null;
 
     const handleSave = async (payload: User) => {
         if (!currentUser?.tenantId) return;

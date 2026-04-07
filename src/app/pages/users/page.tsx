@@ -17,7 +17,6 @@ export default function UsersPage() {
   const {
     users,
     fetchUsers,
-    saveUser,
     removeUser,
     isLoading: isUsersLoading,
   } = useUsersStore();

@@ -43,8 +43,8 @@ async function check() {
         console.log("User Role Enum Labels:");
         console.table(enums.rows);
 
-    } catch (e: any) {
-        console.error("Error checking DB:", e.message);
+    } catch (e: unknown) {
+        console.error("Error checking DB:", e instanceof Error ? e.message : String(e));
     }
     await pool.end();
     process.exit(0);

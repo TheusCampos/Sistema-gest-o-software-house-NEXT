@@ -31,11 +31,12 @@ async function test_insert() {
         await db.execute(sql`DELETE FROM users WHERE id = ${testId} AND tenant_id = ${testTenant}`);
         console.log("Teste limpo com sucesso.");
         process.exit(0);
-    } catch (e: any) {
+    } catch (e: unknown) {
+        const error = e as { message?: string; detail?: string; hint?: string };
         console.error("ERRO NA INSERÇÃO DE TESTE:");
-        console.error("Mensagem:", e.message);
-        if (e.detail) console.error("Detalhe PG:", e.detail);
-        if (e.hint) console.error("Dica PG:", e.hint);
+        console.error("Mensagem:", error.message || "Unknown error");
+        if (error.detail) console.error("Detalhe PG:", error.detail);
+        if (error.hint) console.error("Dica PG:", error.hint);
         process.exit(1);
     }
 }

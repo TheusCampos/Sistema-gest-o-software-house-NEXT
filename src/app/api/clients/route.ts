@@ -10,7 +10,7 @@ export const dynamic = "force-dynamic";
 import { withAuth } from "@/lib/api-wrapper";
 
 // GET /api/clients — listagem resumida
-export const GET = withAuth(async (request, _session) => {
+export const GET = withAuth(async (request) => {
   const { searchParams } = new URL(request.url);
   const limit = parseInt(searchParams.get('limit') || '5000', 10);
   const offset = parseInt(searchParams.get('offset') || '0', 10);
@@ -179,11 +179,12 @@ export const POST = withAuth(async (request, session) => {
     });
 
     return NextResponse.json(newClient, { status: 201 });
-    } catch (error: any) {
+    } catch (error: unknown) {
+    const err = error as { detail?: string; hint?: string; message?: string };
     console.error("CRITICAL CLIENT SAVE ERROR:", error);
-    const pgDetail = error.detail || "";
-    const pgHint = error.hint || "";
-    const message = error.message || "Erro desconhecido";
+    const pgDetail = err.detail || "";
+    const pgHint = err.hint || "";
+    const message = err.message || "Erro desconhecido";
     
     return NextResponse.json({ 
         message: "Erro no banco ao salvar cliente: " + message, 
@@ -274,11 +275,12 @@ export const PUT = withAuth(async (request, session) => {
     });
 
     return NextResponse.json(parsedData);
-  } catch (error: any) {
+  } catch (error: unknown) {
+    const err = error as { detail?: string; hint?: string; message?: string };
     console.error("CRITICAL CLIENT UPDATE ERROR:", error);
-    const pgDetail = error.detail || "";
-    const pgHint = error.hint || "";
-    const message = error.message || "Erro desconhecido";
+    const pgDetail = err.detail || "";
+    const pgHint = err.hint || "";
+    const message = err.message || "Erro desconhecido";
     
     return NextResponse.json({ 
         message: "Erro no banco ao atualizar cliente: " + message, 

@@ -16,8 +16,8 @@ async function run() {
         });
         console.log("--- SCHEMA END ---");
         process.exit(0);
-    } catch (e: any) {
-        console.error("Erro ao descrever banco:", e.message);
+    } catch (e: unknown) {
+        console.error("Erro ao descrever banco:", e instanceof Error ? e.message : String(e));
         process.exit(1);
     }
 }

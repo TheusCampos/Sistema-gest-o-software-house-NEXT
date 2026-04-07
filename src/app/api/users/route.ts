@@ -222,12 +222,13 @@ export const POST = withAuth(async (request, session) => {
         });
 
         return NextResponse.json(result, { status: 201 });
-    } catch (e: any) {
-        console.error("CRITICAL USER SAVE ERROR:", e);
+    } catch (e: unknown) {
+        const error = e as { detail?: string; cause?: { detail?: string; message?: string; code?: string }; message?: string; code?: string };
+        console.error("CRITICAL USER SAVE ERROR:", error);
         
-        const pgDetail = e.detail || e.cause?.detail || "";
-        const message = e.message || e.cause?.message || "Erro desconhecido";
-        const pgCode = e.code || e.cause?.code;
+        const pgDetail = error.detail || error.cause?.detail || "";
+        const message = error.message || error.cause?.message || "Erro desconhecido";
+        const pgCode = error.code || error.cause?.code;
         
         const isDuplicate = 
             pgCode === '23505' ||
@@ -342,14 +343,15 @@ export const PUT = withAuth(async (request, session) => {
         });
 
         return NextResponse.json(updatedUser);
-    } catch (e: any) {
-        if (e.message === "NOT_FOUND") {
+    } catch (e: unknown) {
+        const error = e as { detail?: string; cause?: { detail?: string; message?: string; code?: string }; message?: string; code?: string };
+        if (error.message === "NOT_FOUND") {
             return NextResponse.json({ message: "Usuário não encontrado." }, { status: 404 });
         }
 
-        const pgDetail = e.detail || e.cause?.detail || "";
-        const message = e.message || e.cause?.message || "Erro desconhecido";
-        const pgCode = e.code || e.cause?.code;
+        const pgDetail = error.detail || error.cause?.detail || "";
+        const message = error.message || error.cause?.message || "Erro desconhecido";
+        const pgCode = error.code || error.cause?.code;
 
         const isDuplicate = 
             pgCode === '23505' ||
@@ -365,7 +367,7 @@ export const PUT = withAuth(async (request, session) => {
             }, { status: 409 });
         }
 
-        console.error("DEBUG USER UPDATE ERROR:", e);
+        console.error("DEBUG USER UPDATE ERROR:", error);
         return NextResponse.json({ message: "Erro ao atualizar: " + message }, { status: 500 });
     }
 });

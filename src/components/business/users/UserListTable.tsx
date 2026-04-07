@@ -1,4 +1,4 @@
-import React from 'react';
+import Image from 'next/image';
 import Link from 'next/link';
 import { User } from '@/types';
 
@@ -90,8 +90,15 @@ export const UserListTable: React.FC<UserListTableProps> = ({
                                         >
                                             <td className="px-0 md:px-8 py-2 md:py-[6px] flex-[2] w-full md:w-auto">
                                                 <div className="flex items-center gap-3">
-                                                    <div className="w-10 h-10 rounded-xl overflow-hidden border border-slate-200 dark:border-slate-700 shadow-sm shrink-0 bg-slate-200 dark:bg-slate-700">
-                                                        <img src={user.avatar || `https://ui-avatars.com/api/?name=${encodeURIComponent(user.name)}&background=random`} alt="" className="w-full h-full object-cover" />
+                                                    <div className="w-10 h-10 rounded-xl overflow-hidden border border-slate-200 dark:border-slate-700 shadow-sm shrink-0 bg-slate-100 dark:bg-slate-800 border-none">
+                                                        <Image 
+                                                            src={user.avatar || `https://ui-avatars.com/api/?name=${encodeURIComponent(user.name)}&background=random`} 
+                                                            alt={user.name} 
+                                                            width={40} 
+                                                            height={40} 
+                                                            className="w-full h-full object-cover" 
+                                                            unoptimized
+                                                        />
                                                     </div>
                                                     <div className="overflow-hidden">
                                                         <p className="text-sm font-bold text-slate-900 dark:text-white uppercase tracking-tighter truncate">

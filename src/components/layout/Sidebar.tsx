@@ -2,6 +2,7 @@
 
 import React from 'react';
 import Link from 'next/link';
+import Image from 'next/image';
 import { usePathname } from 'next/navigation';
 import { useApp } from '@/context/AppContext';
 
@@ -127,10 +128,13 @@ const Sidebar: React.FC = () => {
                 <div className="flex items-center justify-between gap-3 p-3 bg-white dark:bg-slate-800 border border-[#f1f5f9] dark:border-slate-700 rounded-2xl shadow-sm mb-3">
                     <div className="flex items-center gap-3 overflow-hidden">
                         <div className="shrink-0 w-10 h-10 rounded-lg overflow-hidden border border-slate-100 dark:border-slate-600 bg-slate-200 dark:bg-slate-700">
-                            <img 
+                            <Image 
                                 src={currentUser?.avatar || `https://ui-avatars.com/api/?name=${encodeURIComponent(currentUser?.name || '')}&background=random`}
                                 alt="Avatar"
+                                width={40}
+                                height={40}
                                 className="w-full h-full object-cover"
+                                unoptimized
                             />
                         </div>
                         <div className="flex flex-col min-w-0">
