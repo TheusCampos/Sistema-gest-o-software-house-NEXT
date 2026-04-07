@@ -6,6 +6,10 @@ import { EMPTY_PERMISSIONS, ADMIN_PERMISSIONS } from "@/permissions";
 import { forbiddenResponse, SessionUser } from "@/lib/session";
 import { hashPassword } from "@/lib/password";
 import { withAuth } from "@/lib/api-wrapper";
+import { 
+  userCreationSchema, 
+  userUpdateSchema, 
+} from "@/schemas/user.schema";
 
 export const dynamic = "force-dynamic";
 
@@ -28,12 +32,16 @@ type PermissionRow = {
     delete: boolean;
 };
 
+/**
+ * Verifica se o usuário da sessão tem permissão de administrador ou acesso às configurações.
+ */
 async function ensureAdmin(session: SessionUser): Promise<NextResponse | null> {
     if (!session.role) {
         return forbiddenResponse("Acesso negado. Sessão inválida.");
     }
 
     const currentRole = session.role.trim().toLowerCase();
+    // Desenvolvedor é considerado super-admin
     if (currentRole === "admin" || currentRole === "desenvolvedor") {
         return null;
     }
@@ -61,31 +69,38 @@ async function ensureAdmin(session: SessionUser): Promise<NextResponse | null> {
 }
 
 function isAdminRole(role: string): boolean {
-    const r = role.toLowerCase();
+    const r = role?.toLowerCase();
     return r === "admin" || r === "desenvolvedor";
 }
 
+/**
+ * Agrupa permissões do banco para o formato de objeto do sistema.
+ */
 function mapPermissionsByUser(rows: PermissionRow[]) {
     const permissionsMap = new Map<string, UserPermissions>();
 
     for (const row of rows) {
         if (!permissionsMap.has(row.userId)) {
-            permissionsMap.set(row.userId, JSON.parse(JSON.stringify(EMPTY_PERMISSIONS)));
+            // Point 10: Use structuredClone ou spread em vez de JSON.parse(JSON.stringify)
+            permissionsMap.set(row.userId, { ...EMPTY_PERMISSIONS });
         }
         const current = permissionsMap.get(row.userId);
         if (!current || !current[row.moduleName]) continue;
+        
         current[row.moduleName] = {
-            view: row.view,
-            create: row.create,
-            edit: row.edit,
-            delete: row.delete,
+            view: !!row.view,
+            create: !!row.create,
+            edit: !!row.edit,
+            delete: !!row.delete,
         };
     }
 
     return permissionsMap;
 }
 
+// GET /api/users
 export const GET = withAuth(async (_request, session) => {
+    // Point 3: Filtra por usuários ativos para não listar deletados/inativos
     const usersResult = await db.execute(sql`
         SELECT
             id,
@@ -97,6 +112,7 @@ export const GET = withAuth(async (_request, session) => {
             active
         FROM users
         WHERE tenant_id = ${session.tenantId}
+          AND active = true
         ORDER BY created_at DESC
     `);
 
@@ -134,74 +150,74 @@ export const GET = withAuth(async (_request, session) => {
     return NextResponse.json(users);
 });
 
+// POST /api/users
 export const POST = withAuth(async (request, session) => {
     const adminError = await ensureAdmin(session);
     if (adminError) return adminError;
 
-    const body = (await request.json()) as Partial<User>;
-    const role = body.role as User["role"] | undefined;
-
-    if (!body.name || !body.email || !role) {
-        return NextResponse.json(
-            { message: "Nome, e-mail e função são obrigatórios." },
-            { status: 400 },
-        );
+    const rawBody = await request.json();
+    
+    // Point 13: Validação centralizada com Zod (Garante e-mail válido e UUID correto)
+    const validation = userCreationSchema.safeParse(rawBody);
+    if (!validation.success) {
+        return NextResponse.json({ 
+            message: "Dados de entrada inválidos", 
+            errors: validation.error.format() 
+        }, { status: 400 });
     }
 
-    if (!body.name || !body.email || !body.password) {
-        return NextResponse.json({ message: "Dados incompletos." }, { status: 400 });
-    }
-
-    const hashedPassword = hashPassword(body.password);
-    const userId = body.id && body.id.includes("-") && body.id.length >= 36 ? body.id : null;
-    const finalRole = role.trim().toLowerCase();
-
+    const data = validation.data;
+    const hashedPassword = hashPassword(data.password);
+    
     try {
         const result = await db.transaction(async (tx) => {
+            // 1. Inserir usuário
             const userInsert = await tx.execute(sql`
                 INSERT INTO users (
                     tenant_id, id, name, email, password, role, avatar, active
                 ) VALUES (
                     ${session.tenantId},
-                    ${userId ? userId : sql`gen_random_uuid()`},
-                    ${body.name!.trim()},
-                    ${body.email!.trim().toLowerCase()},
+                    ${data.id ? data.id : sql`gen_random_uuid()`},
+                    ${data.name},
+                    ${data.email},
                     ${hashedPassword},
-                    ${finalRole}::user_role_enum,
-                    ${body.avatar || null},
-                    ${body.active ?? true}
+                    ${data.role}::user_role_enum,
+                    ${data.avatar || null},
+                    ${data.active}
                 ) RETURNING id
             `);
 
             const insertedId = String(userInsert.rows[0].id);
 
-            if (!isAdminRole(finalRole)) {
-                const payloadPermissions = body.permissions || EMPTY_PERMISSIONS;
-                const modules = Object.keys(payloadPermissions) as Array<keyof UserPermissions>;
+            // 2. Inserir permissões (Se não for admin, insere as permissões do payload)
+            if (!isAdminRole(data.role)) {
+                const perms = data.permissions || EMPTY_PERMISSIONS;
+                const modules = Object.keys(perms) as Array<keyof UserPermissions>;
 
-                for (const permissionModule of modules) {
-                    const p = payloadPermissions[permissionModule];
-                    if (!p) continue;
-                    await tx.execute(sql`
-                        INSERT INTO user_permissions (
-                            tenant_id, user_id, module_name, can_view, can_create, can_edit, can_delete
-                        ) VALUES (
-                            ${session.tenantId}, ${insertedId}, ${permissionModule},
-                            ${!!p.view}, ${!!p.create}, ${!!p.edit}, ${!!p.delete}
-                        )
-                    `);
+                if (modules.length > 0) {
+                    for (const moduleName of modules) {
+                        const p = perms[moduleName];
+                        await tx.execute(sql`
+                            INSERT INTO user_permissions (
+                                tenant_id, user_id, module_name, can_view, can_create, can_edit, can_delete
+                            ) VALUES (
+                                ${session.tenantId}, ${insertedId}, ${moduleName},
+                                ${!!p.view}, ${!!p.create}, ${!!p.edit}, ${!!p.delete}
+                            )
+                        `);
+                    }
                 }
             }
 
             return {
                 id: insertedId,
                 tenantId: session.tenantId,
-                name: body.name,
-                email: body.email,
-                role: finalRole as User["role"],
-                avatar: body.avatar || "",
-                active: body.active ?? true,
-                permissions: isAdminRole(finalRole) ? ADMIN_PERMISSIONS : body.permissions || EMPTY_PERMISSIONS,
+                name: data.name,
+                email: data.email,
+                role: data.role as User["role"],
+                avatar: data.avatar || "",
+                active: data.active,
+                permissions: isAdminRole(data.role) ? ADMIN_PERMISSIONS : data.permissions || EMPTY_PERMISSIONS,
             } as User;
         });
 
@@ -209,113 +225,152 @@ export const POST = withAuth(async (request, session) => {
     } catch (e: any) {
         console.error("CRITICAL USER SAVE ERROR:", e);
         
-        const pgDetail = e.detail || "";
-        const pgHint = e.hint || "";
-        const message = e.message || "Erro desconhecido";
+        const pgDetail = e.detail || e.cause?.detail || "";
+        const message = e.message || e.cause?.message || "Erro desconhecido";
+        const pgCode = e.code || e.cause?.code;
         
-        // Verifica se é erro de unicidade (e-mail já existe)
-        const isDuplicate = message.toLowerCase().includes("unique") || 
-                           message.toLowerCase().includes("duplicate") ||
-                           pgDetail.toLowerCase().includes("already exists") ||
-                           message.includes("users_email_key");
+        const isDuplicate = 
+            pgCode === '23505' ||
+            message.toLowerCase().includes("unique") || 
+            message.toLowerCase().includes("unicidade") ||
+            pgDetail.toLowerCase().includes("already exists") ||
+            pgDetail.toLowerCase().includes("já existe");
 
         if (isDuplicate) {
             return NextResponse.json({ 
-                message: "Este e-mail já está em uso neste sistema (CNPJ/Tenant).", 
-                detail: pgDetail,
-                hint: "Tente usar um e-mail diferente."
+                message: "Este e-mail já está em uso neste sistema.", 
+                detail: pgDetail
             }, { status: 409 });
         }
         
         return NextResponse.json({ 
-            message: "Erro interno no banco: " + message, 
-            detail: pgDetail,
-            hint: pgHint
+            message: "Falha ao salvar no banco: " + message,
+            hint: "Verifique se o banco suporta 'gen_random_uuid()' e se o enum 'user_role_enum' está atualizado."
         }, { status: 500 });
     }
 });
 
+// PUT /api/users
 export const PUT = withAuth(async (request, session) => {
-    const body = (await request.json()) as Partial<User>;
-    const role = body.role as User["role"] | undefined;
-
-    const adminError = await ensureAdmin(session);
-    if (adminError && body.id !== session.id) {
-        return adminError;
+    const rawBody = await request.json();
+    
+    // Validação inicial com Zod
+    const validation = userUpdateSchema.safeParse(rawBody);
+    if (!validation.success) {
+        return NextResponse.json({ 
+            message: "Dados de atualização inválidos", 
+            errors: validation.error.format() 
+        }, { status: 400 });
     }
 
-    if (!body.id || !role) {
-        return NextResponse.json({ message: "ID e função são obrigatórios." }, { status: 400 });
+    const data = validation.data;
+
+    // Point 2: Segurança - Se não for admin e tentar editar outro usuário, nega.
+    const canManageUsers = (await ensureAdmin(session)) === null;
+    const isSelfEdit = data.id === session.id;
+
+    if (!canManageUsers && !isSelfEdit) {
+        return forbiddenResponse("Você não tem permissão para editar outros usuários.");
     }
 
     try {
-        await db.transaction(async (tx) => {
-            if (body.password && body.password.trim().length > 0) {
-                await tx.execute(sql`
-                    UPDATE users SET
-                        name = ${body.name},
-                        email = ${body.email},
-                        password = ${hashPassword(body.password.trim())},
-                        role = ${role.toLowerCase()}::user_role_enum,
-                        avatar = ${body.avatar !== undefined ? body.avatar : sql`avatar`},
-                        active = ${body.active ?? true},
-                        updated_at = NOW()
-                    WHERE id = ${body.id} AND tenant_id = ${session.tenantId}
-                `);
-            } else {
-                await tx.execute(sql`
-                    UPDATE users SET
-                        name = ${body.name},
-                        email = ${body.email},
-                        role = ${role.toLowerCase()}::user_role_enum,
-                        avatar = ${body.avatar !== undefined ? body.avatar : sql`avatar`},
-                        active = ${body.active ?? true},
-                        updated_at = NOW()
-                    WHERE id = ${body.id} AND tenant_id = ${session.tenantId}
-                `);
-            }
-
-            await tx.execute(sql`
-                DELETE FROM user_permissions
-                WHERE user_id = ${body.id} AND tenant_id = ${session.tenantId}
+        const updatedUser = await db.transaction(async (tx) => {
+            // Verifica existência
+            const currentResult = await tx.execute(sql`
+                SELECT role, active, name, email, avatar FROM users 
+                WHERE id = ${data.id} AND tenant_id = ${session.tenantId}
             `);
 
-            if (!isAdminRole(role)) {
-                const payloadPermissions = body.permissions || EMPTY_PERMISSIONS;
-                const modules = Object.keys(payloadPermissions) as Array<keyof UserPermissions>;
+            if (currentResult.rows.length === 0) {
+                throw new Error("NOT_FOUND");
+            }
 
-                for (const permissionModule of modules) {
-                    const p = payloadPermissions[permissionModule];
-                    if (!p) continue;
+            const current = currentResult.rows[0] as { role: string; active: boolean; name: string, email: string, avatar: string };
+
+            // Point 2 & 16: Se for Self-Edit mas não Admin, impede mudança de Role/Permissions/Active
+            const finalRole = (canManageUsers && data.role) ? data.role : current.role;
+            const finalActive = (canManageUsers && data.active !== undefined) ? data.active : current.active;
+
+            const hasValidNewPassword = data.password && data.password.trim().length >= 6;
+            
+            // 1. Update dos dados básicos do usuário
+            await tx.execute(sql`
+                UPDATE users SET
+                    name = ${data.name || current.name},
+                    email = ${data.email || current.email},
+                    password = ${hasValidNewPassword ? hashPassword(data.password!) : sql`password`},
+                    role = ${finalRole}::user_role_enum,
+                    avatar = ${data.avatar !== undefined ? data.avatar : current.avatar},
+                    active = ${finalActive},
+                    updated_at = NOW()
+                WHERE id = ${data.id} AND tenant_id = ${session.tenantId}
+            `);
+
+            // 2. Atualização de Permissões (Apenas Admin/Configurator pode mudar isso)
+            if (canManageUsers && data.permissions && !isAdminRole(finalRole)) {
+                await tx.execute(sql`
+                    DELETE FROM user_permissions
+                    WHERE user_id = ${data.id} AND tenant_id = ${session.tenantId}
+                `);
+
+                const perms = data.permissions;
+                const modules = Object.keys(perms) as Array<keyof UserPermissions>;
+
+                for (const moduleName of modules) {
+                    const p = perms[moduleName];
                     await tx.execute(sql`
                         INSERT INTO user_permissions (
                             tenant_id, user_id, module_name, can_view, can_create, can_edit, can_delete
                         ) VALUES (
-                            ${session.tenantId}, ${body.id}, ${permissionModule},
+                            ${session.tenantId}, ${data.id}, ${moduleName},
                             ${!!p.view}, ${!!p.create}, ${!!p.edit}, ${!!p.delete}
                         )
                     `);
                 }
             }
+
+            return {
+                id: data.id,
+                tenantId: session.tenantId,
+                name: data.name || current.name,
+                email: data.email || current.email,
+                role: finalRole as User["role"],
+                avatar: data.avatar || current.avatar || "",
+                active: finalActive,
+                permissions: isAdminRole(finalRole) ? ADMIN_PERMISSIONS : data.permissions || EMPTY_PERMISSIONS,
+            } as User;
         });
 
-        return NextResponse.json({
-            id: body.id,
-            tenantId: session.tenantId,
-            name: body.name,
-            email: body.email,
-            role,
-            avatar: body.avatar || "",
-            active: body.active ?? true,
-            permissions: isAdminRole(role) ? ADMIN_PERMISSIONS : body.permissions || EMPTY_PERMISSIONS,
-        } as User);
+        return NextResponse.json(updatedUser);
     } catch (e: any) {
+        if (e.message === "NOT_FOUND") {
+            return NextResponse.json({ message: "Usuário não encontrado." }, { status: 404 });
+        }
+
+        const pgDetail = e.detail || e.cause?.detail || "";
+        const message = e.message || e.cause?.message || "Erro desconhecido";
+        const pgCode = e.code || e.cause?.code;
+
+        const isDuplicate = 
+            pgCode === '23505' ||
+            message.toLowerCase().includes("unique") || 
+            message.toLowerCase().includes("unicidade") ||
+            pgDetail.toLowerCase().includes("already exists") ||
+            pgDetail.toLowerCase().includes("já existe");
+
+        if (isDuplicate) {
+            return NextResponse.json({ 
+                message: "A atualização falhou, este e-mail já está em uso por outro usuário.", 
+                detail: pgDetail
+            }, { status: 409 });
+        }
+
         console.error("DEBUG USER UPDATE ERROR:", e);
-        const detail = e.detail || e.message || "Erro desconhecido";
-        return NextResponse.json({ message: "Erro ao atualizar: " + detail }, { status: 500 });
+        return NextResponse.json({ message: "Erro ao atualizar: " + message }, { status: 500 });
     }
 });
 
+// DELETE /api/users
 export const DELETE = withAuth(async (request, session) => {
     const adminError = await ensureAdmin(session);
     if (adminError) return adminError;
@@ -327,12 +382,17 @@ export const DELETE = withAuth(async (request, session) => {
         return NextResponse.json({ message: "ID é obrigatório." }, { status: 400 });
     }
 
-    await db.execute(sql`
+    // Point 15: Retornar 404 se o usuário não existir ou já estiver inativo
+    const result = await db.execute(sql`
         UPDATE users SET
             active = false,
             updated_at = NOW()
-        WHERE id = ${id} AND tenant_id = ${session.tenantId}
+        WHERE id = ${id} AND tenant_id = ${session.tenantId} AND active = true
     `);
+
+    if (result.rowCount === 0) {
+        return NextResponse.json({ message: "Usuário não encontrado ou já desativado." }, { status: 404 });
+    }
 
     return NextResponse.json({ id, success: true });
 });

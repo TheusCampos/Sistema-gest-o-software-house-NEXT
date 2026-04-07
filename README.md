@@ -1,107 +1,84 @@
-# 🔱 Sistema Zeus - Gestão SoftHouse (Next-App v3.0)
+# 🔱 Sistema Zeus - Gestão Administrativa SoftHouse (v3.1)
 
-Este é o **Sistema Zeus**, uma plataforma SaaS moderna e robusta desenvolvida com **Next.js**, projetada para o gerenciamento administrativo e operacional completo de uma SoftHouse.
-
-O projeto oferece uma infraestrutura de alto desempenho para gestão de clientes, contratos, equipamentos, tickets de suporte e agendamentos, com suporte a multi-tenancy nativo.
+O **Sistema Zeus** é uma plataforma SaaS (Software as a Service) de última geração, desenvolvida para centralizar a operação administrativa, técnica e financeira de uma SoftHouse moderna. Built with **Next.js 16**, **React 19** and **Tailwind CSS 4**.
 
 ---
 
-## 🚀 Tecnologias de Ponta
-
-O sistema utiliza o que há de mais moderno no ecossistema Web (2026):
-
-- **Framework**: [Next.js 16.1.6](https://nextjs.org/) (App Router + Server Components).
-- **Frontend**: [React 19](https://react.dev/) com React Compiler integrado.
-- **Linguagem**: [TypeScript 5](https://www.typescriptlang.org/) (Tipagem estrita em todo o core).
-- **Estilização**: [Tailwind CSS 4](https://tailwindcss.com/) para design responsivo e dinâmico.
-- **Estado Global**: [Zustand 5.0.10](https://github.com/pmndrs/zustand) (Arquitetura desacoplada por módulos).
-- **Banco de Dados**: [Drizzle ORM](https://orm.drizzle.team/) sobre PostgreSQL.
-- **Gráficos**: [Recharts 3.7.0](https://recharts.org/) para visualização analítica.
-- **Documentação**: OpenAPI + [Swagger UI](https://swagger.io/) em `/docs`.
-- **IA**: Integração nativa com [Google Gemini Pro AI](https://ai.google.dev/).
+## 🎯 Objetivo do Projeto
+Oferecer uma visão de 360 graus da empresa, integrando gestão de contratos, suporte técnico (Tickets), inventário de ativos e performance comercial em um único ecossistema seguro e escalável.
 
 ---
 
-## ✨ Funcionalidades Principais (Módulos)
+## 🚀 Tecnologias e Stack Técnica (2026 Ready)
+O sistema utiliza tecnologias de ponta para garantir performance extrema e segurança:
 
-O sistema é modularizado em _Stores_ que garantem alta previsibilidade:
-
-- **🔐 🔐 Segurança & RBAC**: Controle de sessão via `authStore` e permissões granulares de nível corporativo (Admin, Vendedor, Suporte, Cliente).
-- **👥 Gestão de Clientes**: Cadastro multi-tabela (Infos Gerais, Endereço, Contratos, Módulos Ativos).
-- **📄 Administração de Contratos**: Controle de SLA, validade e faturamento vinculado ao cliente.
-- **🖥️ Inventário de Ativos**: Gestão completa de Hardware (Desktops, Notebooks, Servers) e Virtulização (VMs).
-- **🎫 Sistema de Tickets**: Fluxo completo de chamados com priorização, categorias e interações.
-- **📅 Agenda Técnica**: Sincronização de compromissos com vínculo direto a tickets de suporte.
-- **🎨 UI Adaptativa**: Tema dinâmico (Dark/Light Mode) e Sidebar inteligente via `uiStore`.
-
----
-
-## 📂 Estrutura de Diretórios
-
-O projeto segue uma arquitetura orientada a **Recursos e Responsabilidades**:
-
-```bash
-src/
-├── app/          # Rotas, APIs e Layouts (App Router)
-├── components/   # UI primitiva (shadcn/ui), Composição e Negócio
-├── context/      # Provedores de estado e injeção de dependências
-├── lib/          # Banco de dados, Criptografia e api-wrapper
-├── services/     # Integração com APIs externas e Gemini AI
-├── stores/       # Lógica de estado canalizada (Zustand)
-├── schemas/      # Validações estritas com Zod
-└── permissions.ts # Matriz de permissão por Role/Módulo
-```
+| Tecnologia | Descrição | Versão |
+| :--- | :--- | :--- |
+| **Framework** | Next.js (App Router + Server Components) | 16.1.6 |
+| **Runtime** | React (com React Compiler) | 19.2.3 |
+| **UI Engine** | Tailwind CSS (Engine v4 High Performance) | 4.0.0+ |
+| **Data Logic** | Drizzle ORM + PostgreSQL (Neon/Local) | 0.45.1 |
+| **State** | Zustand (Modular Stores) | 5.0.10 |
+| **AI** | Google Gemini Pro (Integração Nativa) | Latest |
+| **API Docs** | Swagger UI / OpenAPI 3.0 | 5.32.1 |
 
 ---
 
-## 🛠️ Início Rápido
+## 📦 Estrutura e Módulos Principais
+O Zeus é construído de forma modular, permitindo que cada área da empresa tenha ferramentas dedicadas:
 
-1. **Clone o repositório e instale as dependências:**
-   ```bash
-   npm install
-   ```
-
-2. **Configure as Variáveis de Ambiente:**
-   Crie um arquivo `.env` na raiz do projeto (use o `.env.example` como base).
-
-3. **Inicie o Ambiente de Desenvolvimento:**
-   ```bash
-   npm run dev
-   ```
-   Acesse a aplicação em [http://localhost:3003](http://localhost:3003).
-
-4. **Explore a Documentação da API:**
-   Acesse [http://localhost:3003/docs](http://localhost:3003/docs) para ver a especificação Swagger interactiva.
+- **🔐 Autenticação & RBAC**: Controle granular de acessos por roles (Admin, Técnico, Vendedor).
+- **👥 Gestão de Clientes**: CRM técnico com histórico de contratos, módulos e endereços.
+- **📄 Contratos & Faturamento**: Controle de SLAs e módulos ativos para faturamento SaaS.
+- **🎫 Tickets & SLA**: Sistema de chamados com checklists e prioridade dinâmica.
+- **🖥️ Inventário (Hardware/VMs)**: Gestão de ativos físicos e instâncias virtuais.
+- **📅 Agenda Técnica**: Sincronização de visitas técnicas vinculadas a chamados.
 
 ---
 
-## 📦 Scripts Disponíveis
+## 📂 Documentação Detalhada
+Para facilitar a navegação técnica, o projeto possui documentos especializados em `/docs`:
 
-- `npm run dev`: Inicia o servidor de desenvolvimento.
-- `npm run build`: Gera a build de produção otimizada.
-- `npm start`: Inicia o servidor em modo de produção.
-- `npm run lint`: Verificação de qualidade de código (ESLint).
-
----
-
-## 🔒 Segurança e Privacidade
-
-- **Sessões**: Persistência via Cookie `httpOnly` para mitigar ataques XSS.
-- **Senhas**: Hashing seguro com Argon2.
-- **Permissões**: Validação via middleware para cada módulo do sistema.
-
----
-Para mais detalhes técnicos, consulte a [Visão Geral do Sistema](docs/visão_geral_sistema.md).
+1.  **[Visão Geral do Sistema](docs/visão_geral_sistema.md)**: Arquitetura profunda, segurança, fluxos de dados e infraestrutura.
+2.  **[Guia de Detalhamento de Módulos](docs/MODULOS.md)**: O que cada módulo faz e quais stores/schemas utiliza.
+3.  **[Manual de Contribuição](docs/CONTRIBUICAO.md)**: Padrões de código, Git flow, Design System e como adicionar novas features.
+4.  **[Matriz de Permissões (RBAC)](docs/PERMISSOES.md)**: Detalhamento de quem pode acessar o quê.
 
 ---
 
-## 🚀 Como Fazer o Deploy (Vercel)
+## 🛠️ Início Rápido (Desenvolvimento)
 
-Este projeto já está otimizado para deploy na **Vercel** e outras plataformas serverless:
+1.  **Clone e Instale:**
+    ```bash
+    npm install
+    ```
 
-1. Suba este código para o seu repositório no GitHub.
-2. Acesse [Vercel](https://vercel.com/) e crie um novo projeto, importando o seu repositório.
-3. Configure as **Variáveis de Ambiente** (`Environment Variables`) no painel da Vercel:
-   - `DATABASE_URL` (Sua string de conexão do PostgreSQL de produção)
-   - `AUTH_SECRET` (Gere uma chave segura usando `npx auth secret`)
-4. Clique em **Deploy**. O *Build Command* padrão (`npm run build`) cuidará de compilar e validar o TypeScript automaticamente.
+2.  **Variáveis de Ambiente:**
+    Copie o `.env.example` para `.env` e preencha as chaves:
+    - `DATABASE_URL` (PostgreSQL)
+    - `AUTH_SECRET` (Gerada via `npx auth secret`)
+    - `GEMINI_API_KEY` (Para automações de IA)
+
+3.  **Rode o Sistema:**
+    ```bash
+    npm run dev
+    ```
+    Acesse: [http://localhost:3003](http://localhost:3003)
+
+---
+
+## 📦 Scripts de Utilidade
+- `npm run dev`: Inicia o servidor com Webpack habilitado.
+- `npm run build`: Pipeline de compilação otimizado para produção.
+- `npm run lint`: Verificações de qualidade de código (ESLint 9).
+- `npx tsx src/scripts/...`: Scripts de provimento de banco de dados e migrações rápidas.
+
+---
+
+## 🔒 Segurança em Primeiro Lugar
+- **Sessões Securas**: Cookies `httpOnly` para evitar XSS.
+- **Senhas Fortes**: Criptografia via Argon2.
+- **Isolamento SaaS**: Filtro compulsório por `tenant_id` no nível do banco de dados/ORM.
+
+---
+*Atualizado em: 02 de Abril de 2026.*
