@@ -35,7 +35,7 @@ type PermissionRow = {
 /**
  * Verifica se o usuário da sessão tem permissão de administrador ou acesso às configurações.
  */
-async function ensureAdmin(session: SessionUser): Promise<NextResponse | null> {
+async function ensureAdmin(session: SessionUser, requiredAction: 'create' | 'edit' | 'delete'): Promise<NextResponse | null> {
     if (!session.role) {
         return forbiddenResponse("Acesso negado. Sessão inválida.");
     }
@@ -55,9 +55,9 @@ async function ensureAdmin(session: SessionUser): Promise<NextResponse | null> {
 
         if (permsResult.rows.length > 0) {
             const row = permsResult.rows[0] as { can_edit: boolean; can_create: boolean; can_delete: boolean };
-            if (row.can_edit || row.can_create || row.can_delete) {
-                return null;
-            }
+            if (requiredAction === 'create' && row.can_create) return null;
+            if (requiredAction === 'edit' && row.can_edit) return null;
+            if (requiredAction === 'delete' && row.can_delete) return null;
         }
     } catch (e) {
         console.error("Erro ao verificar permissões:", e);
@@ -152,7 +152,7 @@ export const GET = withAuth(async (_request, session) => {
 
 // POST /api/users
 export const POST = withAuth(async (request, session) => {
-    const adminError = await ensureAdmin(session);
+    const adminError = await ensureAdmin(session, 'create');
     if (adminError) return adminError;
 
     const rawBody = await request.json();
@@ -267,7 +267,7 @@ export const PUT = withAuth(async (request, session) => {
     const data = validation.data;
 
     // Point 2: Segurança - Se não for admin e tentar editar outro usuário, nega.
-    const canManageUsers = (await ensureAdmin(session)) === null;
+    const canManageUsers = (await ensureAdmin(session, 'edit')) === null;
     const isSelfEdit = data.id === session.id;
 
     if (!canManageUsers && !isSelfEdit) {
@@ -374,7 +374,7 @@ export const PUT = withAuth(async (request, session) => {
 
 // DELETE /api/users
 export const DELETE = withAuth(async (request, session) => {
-    const adminError = await ensureAdmin(session);
+    const adminError = await ensureAdmin(session, 'delete');
     if (adminError) return adminError;
 
     const { searchParams } = new URL(request.url);

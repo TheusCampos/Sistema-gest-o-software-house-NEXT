@@ -10,12 +10,29 @@ export const dynamic = "force-dynamic";
 import { withAuth } from "@/lib/api-wrapper";
 
 // GET /api/clients — listagem resumida
-export const GET = withAuth(async (request) => {
+export const GET = withAuth(async (request, session) => {
   const { searchParams } = new URL(request.url);
   const limit = parseInt(searchParams.get('limit') || '5000', 10);
   const offset = parseInt(searchParams.get('offset') || '0', 10);
-  const tenantIdParam = searchParams.get('tenantId') || 'default';
-  const allTenants = searchParams.get('allTenants') === 'true';
+  
+  const role = session.role?.toLowerCase();
+  const isAdmin = role === 'admin' || role === 'desenvolvedor';
+
+  // Security: check user permission if not admin
+  if (!isAdmin) {
+    const permsResult = await db.execute(sql`
+        SELECT can_view
+        FROM user_permissions
+        WHERE user_id = ${session.id} AND tenant_id = ${session.tenantId} AND module_name = 'clients'
+    `);
+    const canView = permsResult.rows.length > 0 && (permsResult.rows[0] as any).can_view;
+    if (!canView) {
+        return NextResponse.json({ message: "Acesso Negado: Sem permissão para visualizar clientes." }, { status: 403 });
+    }
+  }
+
+  // Security: only admins can fetch all tenants
+  const allTenants = isAdmin && searchParams.get('allTenants') === 'true';
 
   const result = await db.execute(sql`
       SELECT
@@ -27,7 +44,7 @@ export const GET = withAuth(async (request) => {
       LEFT JOIN client_general_info  g ON g.tenant_id = c.tenant_id AND g.client_id = c.id
       LEFT JOIN client_status_info   s ON s.tenant_id = c.tenant_id AND s.client_id = c.id
       LEFT JOIN client_address_info  a ON a.tenant_id = c.tenant_id AND a.client_id = c.id
-      WHERE (c.tenant_id = ${tenantIdParam} OR ${allTenants})
+      WHERE (c.tenant_id = ${session.tenantId} OR ${allTenants})
       ORDER BY g.razao
       LIMIT ${limit} OFFSET ${offset}
     `);

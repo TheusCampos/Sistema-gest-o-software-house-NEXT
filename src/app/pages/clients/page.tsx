@@ -13,13 +13,17 @@ import StatCard from '@/components/composite/StatCard';
 const ClientsList: React.FC = () => {
     const { clients, saveClient, fetchClients, isClientsLoading, currentUser } = useApp();
     
-    const isPrivileged = currentUser?.role === 'admin' || currentUser?.role === 'desenvolvedor';
-    // ... (removed my previous comment block)
+    const role = currentUser?.role?.toLowerCase();
+    const isAdmin = role === 'admin' || role === 'desenvolvedor';
+    const canView = isAdmin || currentUser?.permissions?.clients?.view;
+
     // Carrega os clientes ao montar o componente
     useEffect(() => {
-        const tenant = currentUser?.tenantId || 'default';
-        fetchClients(tenant, isPrivileged);
-    }, [fetchClients, currentUser, isPrivileged]);
+        if (canView) {
+            // A API agora resolve o tenant e privilégios via token/session, parâmetros são opcionais.
+            fetchClients();
+        }
+    }, [fetchClients, canView]);
 
 
 
@@ -157,6 +161,22 @@ const ClientsList: React.FC = () => {
         estimateSize,
         overscan: 5,
     });
+
+    if (!currentUser) return null;
+
+    if (!canView) {
+        return (
+            <div className="flex flex-col items-center justify-center p-12 bg-white dark:bg-slate-900 rounded-3xl border border-slate-200 dark:border-slate-800 shadow-sm mt-8">
+                <div className="w-20 h-20 bg-slate-50 dark:bg-slate-800 rounded-full flex items-center justify-center mb-6">
+                    <span className="material-symbols-outlined text-4xl text-slate-400">lock</span>
+                </div>
+                <h2 className="text-2xl font-black text-slate-800 dark:text-white mb-2">Acesso Negado</h2>
+                <p className="text-slate-500 text-center max-w-md">
+                    Você não possui permissão para visualizar a base de clientes. Contate um administrador para solicitar acesso.
+                </p>
+            </div>
+        );
+    }
 
     return (
         <div className="space-y-8 animate-fadeIn">

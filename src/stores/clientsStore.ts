@@ -62,13 +62,7 @@ export const useClientsStore = create<ClientsState & ClientsActions>(
       }
 
       try {
-        let url = tenantId
-          ? `/api/clients?tenantId=${tenantId}`
-          : "/api/clients";
-          
-        if (allTenants) {
-            url += (url.includes('?') ? '&' : '?') + 'allTenants=true';
-        }
+        const url = "/api/clients";
 
         // Removemos { cache: "no-store" } para usar cache HTTP padrão caso servidor retorne headers
         const response = await fetch(url);
