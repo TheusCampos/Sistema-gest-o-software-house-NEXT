@@ -48,10 +48,14 @@ export default function AuthLayout({ children }: { children: React.ReactNode }) 
         hasFetched.current = true;
         const tenantId = currentUser.tenantId;
 
+        const role = currentUser.role;
+        const isAdmin = role === 'admin' || role === 'desenvolvedor';
+        const p = currentUser.permissions;
+
         fetchClients('default');
-        fetchContracts(tenantId);
-        fetchTickets(tenantId);
-        fetchEquipment(tenantId);
+        if (isAdmin || p?.contracts?.view) fetchContracts(tenantId);
+        if (isAdmin || p?.tickets?.view) fetchTickets(tenantId);
+        if (isAdmin || p?.equipment?.view) fetchEquipment(tenantId);
     }, [currentUser, fetchClients, fetchContracts, fetchTickets, fetchEquipment]);
 
     return (

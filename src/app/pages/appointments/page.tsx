@@ -11,12 +11,18 @@ const HOURS = Array.from({ length: 17 }, (_, i) => i + 7); // 7 AM to 11 PM
 const DAYS_OF_WEEK = ['SUN', 'MON', 'TUE', 'WED', 'THU', 'FRI', 'SAT'];
 
 export default function AppointmentsPage() {
-    const { appointments, fetchAppointments, saveAppointment, removeAppointment, tickets, fetchTickets } = useApp();
+    const { appointments, fetchAppointments, saveAppointment, removeAppointment, tickets, fetchTickets, currentUser } = useApp();
 
     const [currentDate, setCurrentDate] = useState(new Date());
     const [viewMode, setViewMode] = useState<'Day' | 'Week' | 'Month'>('Week');
     const [isAddModalOpen, setIsAddModalOpen] = useState(false);
     const [showErrorModal, setShowErrorModal] = useState(false);
+
+    const currentUserRole = currentUser?.role?.toLowerCase();
+    const isAdmin = currentUserRole === 'admin' || currentUserRole === 'desenvolvedor';
+    const canCreate = isAdmin || currentUser?.permissions?.appointments?.create;
+    const canEdit = isAdmin || currentUser?.permissions?.appointments?.edit;
+    const canDelete = isAdmin || currentUser?.permissions?.appointments?.delete;
 
 
     // Filters
@@ -97,6 +103,8 @@ export default function AppointmentsPage() {
     const handleSlotClick = (day: Date, hour: number) => {
         const d = new Date(day);
         d.setHours(hour, 0, 0, 0);
+
+        if (!canCreate) return; // Prevent slot click if no create permission
 
         // Bloqueio de Agendamento Retroativo (Somente ao Criar Novo)
         const now = new Date();
@@ -221,6 +229,7 @@ export default function AppointmentsPage() {
                     setFilterDeploy={setFilterDeploy}
                     filterTask={filterTask}
                     setFilterTask={setFilterTask}
+                    canCreate={canCreate}
                 />
 
                 {/* INTERACTIVE CALENDAR GRIDS */}
@@ -360,6 +369,9 @@ export default function AppointmentsPage() {
                 onSave={handleSave}
                 onDelete={handleDelete}
                 tickets={tickets}
+                canEdit={canEdit}
+                canDelete={canDelete}
+                canCreate={canCreate}
             />
 
             {/* ERROR MODAL (Retroactive Restriction) */}

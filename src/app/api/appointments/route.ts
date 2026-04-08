@@ -3,10 +3,14 @@ import { sql } from "drizzle-orm";
 import { db } from "@/lib/db";
 import type { Appointment } from "@/types";
 import { withAuth } from "@/lib/api-wrapper";
+import { checkModulePermission } from "@/lib/security";
 
 export const dynamic = "force-dynamic";
 
 export const GET = withAuth(async (_request, session) => {
+    const permissionError = await checkModulePermission(session, 'appointments', 'view');
+    if (permissionError) return permissionError;
+
     const result = await db.execute(sql`
         SELECT
             id,
@@ -35,6 +39,9 @@ export const GET = withAuth(async (_request, session) => {
 });
 
 export const POST = withAuth(async (request, session) => {
+    const permissionError = await checkModulePermission(session, 'appointments', 'create');
+    if (permissionError) return permissionError;
+
     const body = (await request.json()) as Partial<Appointment>;
 
     if (!body.title || !body.date) {
@@ -78,6 +85,9 @@ export const POST = withAuth(async (request, session) => {
 });
 
 export const PUT = withAuth(async (request, session) => {
+    const permissionError = await checkModulePermission(session, 'appointments', 'edit');
+    if (permissionError) return permissionError;
+
     const body = (await request.json()) as Appointment;
 
     if (!body.id) {
@@ -112,6 +122,9 @@ export const PUT = withAuth(async (request, session) => {
 });
 
 export const DELETE = withAuth(async (request, session) => {
+    const permissionError = await checkModulePermission(session, 'appointments', 'delete');
+    if (permissionError) return permissionError;
+
     const { searchParams } = new URL(request.url);
     const id = searchParams.get("id");
 

@@ -87,11 +87,27 @@ export default function ClientForm({ clientId, readOnly = false }: ClientFormPro
         setErrorMsg('');
         const id = isEditing && clientId ? clientId : undefined;
 
+        // Sanitize data to match strict schema constraints
+        const rawTipo = String(generalData.tipoPessoa || '').toLowerCase();
+        const sanitizedTipo = (rawTipo.includes('fisi') || rawTipo.includes('pf')) ? 'Fisica' : 'Juridica';
+
+        const sanitizedGeneral = {
+            ...generalData,
+            tipoPessoa: sanitizedTipo as 'Juridica' | 'Fisica',
+            documento: (generalData.documento || '').replace(/\D/g, ''),
+            email: generalData.email || '',
+        };
+
+        const sanitizedAddress = {
+            ...addressData,
+            cep: (addressData.cep || '').replace(/\D/g, ''),
+        };
+
         const payload = {
             id,
             active: true,
-            general: generalData,
-            address: addressData,
+            general: sanitizedGeneral,
+            address: sanitizedAddress,
             contract: contractData,
             modules: modulesData,
             status: statusData

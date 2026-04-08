@@ -64,6 +64,12 @@ export const useContractsStore = create<ContractsState & ContractsActions>(
           return;
         }
 
+        if (response.status === 403) {
+          console.warn("[ContractsStore] Acesso negado ao buscar contratos (403).");
+          set({ contracts: [], isInitialized: true, lastFetchTime: Date.now(), isCacheDirty: false });
+          return;
+        }
+
         if (!response.ok)
           throw new Error(`Falha ao buscar contratos: ${response.status}`);
         const data = await response.json();

@@ -108,8 +108,9 @@ export const useClientsStore = create<ClientsState & ClientsActions>(
     // Salva cliente e marca cache como sujo
     saveClient: async (client) => {
       try {
-        const isUpdate = get().clients.some((c) => c.id === client.id);
-        const method = isUpdate ? "PUT" : "POST";
+        // Use client.id presence to determine method, but ignore temporary IDs
+        const hasValidId = client.id && !client.id.startsWith('temporary-');
+        const method = hasValidId ? "PUT" : "POST";
 
         const response = await fetch("/api/clients", {
           method,
@@ -140,7 +141,7 @@ export const useClientsStore = create<ClientsState & ClientsActions>(
 
         // Atualiza localmente E marca cache como dirty
         set((state) => ({
-          clients: isUpdate
+          clients: hasValidId
             ? state.clients.map((c) =>
               c.id === savedClient.id ? savedClient : c,
             )

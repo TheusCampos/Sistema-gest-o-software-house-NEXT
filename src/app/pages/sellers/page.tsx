@@ -25,6 +25,13 @@ const SellersList: React.FC = () => {
         photo: true, name: true, commission: true, status: true, actions: true,
     });
 
+    const role = currentUser?.role?.toLowerCase();
+    const isAdmin = role === 'admin' || role === 'desenvolvedor';
+    const canView = isAdmin || currentUser?.permissions?.sellers?.view;
+    const canCreate = isAdmin || currentUser?.permissions?.sellers?.create;
+    const canEdit = isAdmin || currentUser?.permissions?.sellers?.edit;
+    const canDelete = isAdmin || currentUser?.permissions?.sellers?.delete;
+
     const [searchTerm, setSearchTerm] = useState('');
     const [statusFilter, setStatusFilter] = useState<'all' | 'active' | 'inactive'>('all');
     const [isModalOpen, setIsModalOpen] = useState(false);
@@ -104,13 +111,15 @@ const SellersList: React.FC = () => {
     return (
         <div className="space-y-8 animate-fadeIn">
             <PageHeader title="Equipe Comercial" subtitle="Gestão de vendedores e comissionamentos.">
-                <button
-                    onClick={() => handleOpenModal()}
-                    className="flex items-center justify-center gap-2 bg-primary hover:bg-blue-600 text-white px-8 py-3.5 rounded-2xl font-bold shadow-xl shadow-primary/20 transition-all active:scale-95 shrink-0"
-                >
-                    <span className="material-symbols-outlined text-[22px]">person_add</span>
-                    Novo Vendedor
-                </button>
+                {canCreate && (
+                    <button
+                        onClick={() => handleOpenModal()}
+                        className="flex items-center justify-center gap-2 bg-primary hover:bg-blue-600 text-white px-8 py-3.5 rounded-2xl font-bold shadow-xl shadow-primary/20 transition-all active:scale-95 shrink-0"
+                    >
+                        <span className="material-symbols-outlined text-[22px]">person_add</span>
+                        Novo Vendedor
+                    </button>
+                )}
             </PageHeader>
 
             <div className="px-4">
@@ -191,15 +200,21 @@ const SellersList: React.FC = () => {
                                         {visibleColumns.actions && (
                                             <td className="px-0 md:px-8 py-2 md:py-[6px] whitespace-nowrap text-right w-full md:w-32 md:shrink-0 flex items-center justify-end">
                                                 <div className="flex items-center justify-end gap-1 w-full">
-                                                    <button onClick={() => handleOpenModal(seller)} className="p-2 text-slate-400 hover:text-primary transition-colors" title="Visualizar">
-                                                        <span className="material-symbols-outlined text-[20px]">visibility</span>
-                                                    </button>
-                                                    <button onClick={() => handleOpenModal(seller)} className="p-2 text-slate-400 hover:text-amber-500 transition-colors" title="Editar">
-                                                        <span className="material-symbols-outlined text-[20px]">edit</span>
-                                                    </button>
-                                                    <button onClick={() => openDeleteModal(seller.id, seller.name)} className="p-2 text-slate-400 hover:text-rose-600 transition-colors" title="Excluir">
-                                                        <span className="material-symbols-outlined text-[20px]">delete</span>
-                                                    </button>
+                                                    {canView && (
+                                                        <button onClick={() => handleOpenModal(seller)} className="p-2 text-slate-400 hover:text-primary transition-colors" title="Visualizar">
+                                                            <span className="material-symbols-outlined text-[20px]">visibility</span>
+                                                        </button>
+                                                    )}
+                                                    {canEdit && (
+                                                        <button onClick={() => handleOpenModal(seller)} className="p-2 text-slate-400 hover:text-amber-500 transition-colors" title="Editar">
+                                                            <span className="material-symbols-outlined text-[20px]">edit</span>
+                                                        </button>
+                                                    )}
+                                                    {canDelete && (
+                                                        <button onClick={() => openDeleteModal(seller.id, seller.name)} className="p-2 text-slate-400 hover:text-rose-600 transition-colors" title="Excluir">
+                                                            <span className="material-symbols-outlined text-[20px]">delete</span>
+                                                        </button>
+                                                    )}
                                                 </div>
                                             </td>
                                         )}

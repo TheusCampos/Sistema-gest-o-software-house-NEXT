@@ -4,6 +4,7 @@ import { db } from "@/lib/db";
 import { Seller } from "@/types";
 import { forbiddenResponse, SessionUser } from "@/lib/session";
 import { withAuth } from "@/lib/api-wrapper";
+import { checkModulePermission, getTenantFilter } from "@/lib/security";
 
 export const dynamic = "force-dynamic";
 
@@ -29,14 +30,12 @@ function mapSellerRow(row: SellerRow): Seller {
     };
 }
 
-function ensureAdmin(session: SessionUser): NextResponse | null {
-    if (session.role !== "admin") {
-        return forbiddenResponse("Apenas administradores podem gerenciar vendedores.");
-    }
-    return null;
-}
+
 
 export const GET = withAuth(async (_request, session) => {
+    const permissionError = await checkModulePermission(session, 'sellers', 'view');
+    if (permissionError) return permissionError;
+
     const result = await db.execute(sql`
         SELECT
             id,
@@ -46,8 +45,8 @@ export const GET = withAuth(async (_request, session) => {
             commission_implementation as "commissionImplementation",
             commission_monthly as "commissionMonthly",
             active
-        FROM sellers
-        WHERE tenant_id = ${session.tenantId}
+        FROM sellers t
+        WHERE ${getTenantFilter(session)}
         ORDER BY name
     `);
 
@@ -55,8 +54,8 @@ export const GET = withAuth(async (_request, session) => {
 });
 
 export const POST = withAuth(async (request, session) => {
-    const adminError = ensureAdmin(session);
-    if (adminError) return adminError;
+    const permissionError = await checkModulePermission(session, 'sellers', 'create');
+    if (permissionError) return permissionError;
 
     const body = (await request.json()) as Seller;
 
@@ -93,8 +92,8 @@ export const POST = withAuth(async (request, session) => {
 });
 
 export const PUT = withAuth(async (request, session) => {
-    const adminError = ensureAdmin(session);
-    if (adminError) return adminError;
+    const permissionError = await checkModulePermission(session, 'sellers', 'edit');
+    if (permissionError) return permissionError;
 
     const body = (await request.json()) as Seller;
 
@@ -133,8 +132,8 @@ export const PUT = withAuth(async (request, session) => {
 });
 
 export const DELETE = withAuth(async (request, session) => {
-    const adminError = ensureAdmin(session);
-    if (adminError) return adminError;
+    const permissionError = await checkModulePermission(session, 'sellers', 'delete');
+    if (permissionError) return permissionError;
 
     const { searchParams } = new URL(request.url);
     const id = searchParams.get("id");

@@ -10,6 +10,7 @@ import {
   userCreationSchema, 
   userUpdateSchema, 
 } from "@/schemas/user.schema";
+import { checkModulePermission } from "@/lib/security";
 
 export const dynamic = "force-dynamic";
 
@@ -35,38 +36,7 @@ type PermissionRow = {
 /**
  * Verifica se o usuário da sessão tem permissão de administrador ou acesso às configurações.
  */
-async function ensureAdmin(session: SessionUser, requiredAction: 'create' | 'edit' | 'delete'): Promise<NextResponse | null> {
-    if (!session.role) {
-        return forbiddenResponse("Acesso negado. Sessão inválida.");
-    }
 
-    const currentRole = session.role.trim().toLowerCase();
-    // Desenvolvedor é considerado super-admin
-    if (currentRole === "admin" || currentRole === "desenvolvedor") {
-        return null;
-    }
-
-    try {
-        const permsResult = await db.execute(sql`
-            SELECT can_edit, can_create, can_delete
-            FROM user_permissions
-            WHERE user_id = ${session.id} AND tenant_id = ${session.tenantId} AND module_name = 'settings'
-        `);
-
-        if (permsResult.rows.length > 0) {
-            const row = permsResult.rows[0] as { can_edit: boolean; can_create: boolean; can_delete: boolean };
-            if (requiredAction === 'create' && row.can_create) return null;
-            if (requiredAction === 'edit' && row.can_edit) return null;
-            if (requiredAction === 'delete' && row.can_delete) return null;
-        }
-    } catch (e) {
-        console.error("Erro ao verificar permissões:", e);
-    }
-
-    return forbiddenResponse(
-        `Apenas administradores ou perfis com acesso às Configurações podem gerenciar usuários. (Perfil atual: ${session.role})`,
-    );
-}
 
 function isAdminRole(role: string): boolean {
     const r = role?.toLowerCase();
@@ -152,8 +122,8 @@ export const GET = withAuth(async (_request, session) => {
 
 // POST /api/users
 export const POST = withAuth(async (request, session) => {
-    const adminError = await ensureAdmin(session, 'create');
-    if (adminError) return adminError;
+    const permissionError = await checkModulePermission(session, 'settings', 'create');
+    if (permissionError) return permissionError;
 
     const rawBody = await request.json();
     
@@ -191,7 +161,7 @@ export const POST = withAuth(async (request, session) => {
 
             // 2. Inserir permissões (Se não for admin, insere as permissões do payload)
             if (!isAdminRole(data.role)) {
-                const perms = data.permissions || EMPTY_PERMISSIONS;
+                const perms = (data.permissions || EMPTY_PERMISSIONS) as UserPermissions;
                 const modules = Object.keys(perms) as Array<keyof UserPermissions>;
 
                 if (modules.length > 0) {
@@ -267,7 +237,7 @@ export const PUT = withAuth(async (request, session) => {
     const data = validation.data;
 
     // Point 2: Segurança - Se não for admin e tentar editar outro usuário, nega.
-    const canManageUsers = (await ensureAdmin(session, 'edit')) === null;
+    const canManageUsers = (await checkModulePermission(session, 'settings', 'edit')) === null;
     const isSelfEdit = data.id === session.id;
 
     if (!canManageUsers && !isSelfEdit) {
@@ -314,7 +284,7 @@ export const PUT = withAuth(async (request, session) => {
                     WHERE user_id = ${data.id} AND tenant_id = ${session.tenantId}
                 `);
 
-                const perms = data.permissions;
+                const perms = data.permissions as UserPermissions;
                 const modules = Object.keys(perms) as Array<keyof UserPermissions>;
 
                 for (const moduleName of modules) {
@@ -374,8 +344,8 @@ export const PUT = withAuth(async (request, session) => {
 
 // DELETE /api/users
 export const DELETE = withAuth(async (request, session) => {
-    const adminError = await ensureAdmin(session, 'delete');
-    if (adminError) return adminError;
+    const permissionError = await checkModulePermission(session, 'settings', 'delete');
+    if (permissionError) return permissionError;
 
     const { searchParams } = new URL(request.url);
     const id = searchParams.get("id");

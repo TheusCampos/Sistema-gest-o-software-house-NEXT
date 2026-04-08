@@ -13,7 +13,9 @@ export type Module =
     | 'equipment'
     | 'sellers'
     | 'appointments'
-    | 'performance';
+    | 'performance'
+    | 'templates'
+    | 'service-types';
 
 export type UserPermissions = Record<Module, CRUDPermissions>;
 

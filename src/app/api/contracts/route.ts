@@ -3,6 +3,7 @@ import { sql } from "drizzle-orm";
 import { db } from "@/lib/db";
 import { Contract } from "@/types";
 import { withAuth } from "@/lib/api-wrapper";
+import { checkModulePermission } from "@/lib/security";
 
 export const dynamic = "force-dynamic";
 
@@ -36,6 +37,9 @@ type ContractItemRow = {
 };
 
 export const GET = withAuth(async (_request, session) => {
+    const permissionError = await checkModulePermission(session, 'contracts', 'view');
+    if (permissionError) return permissionError;
+
     const contractsResult = await db.execute(sql`
         SELECT
             id,
@@ -97,6 +101,9 @@ export const GET = withAuth(async (_request, session) => {
 });
 
 export const POST = withAuth(async (request, session) => {
+    const permissionError = await checkModulePermission(session, 'contracts', 'create');
+    if (permissionError) return permissionError;
+
     const body = (await request.json()) as Contract;
 
     if (!body.contractNumber || !body.clientName) {
@@ -179,6 +186,9 @@ export const POST = withAuth(async (request, session) => {
 });
 
 export const PUT = withAuth(async (request, session) => {
+    const permissionError = await checkModulePermission(session, 'contracts', 'edit');
+    if (permissionError) return permissionError;
+
     const body = (await request.json()) as Contract;
 
     if (!body.id) {
@@ -253,6 +263,9 @@ export const PUT = withAuth(async (request, session) => {
 });
 
 export const DELETE = withAuth(async (request, session) => {
+    const permissionError = await checkModulePermission(session, 'contracts', 'delete');
+    if (permissionError) return permissionError;
+
     const { searchParams } = new URL(request.url);
     const id = searchParams.get("id");
 

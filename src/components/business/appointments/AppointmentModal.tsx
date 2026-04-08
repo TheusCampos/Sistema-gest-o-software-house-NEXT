@@ -11,6 +11,9 @@ interface AppointmentModalProps {
     onSave: () => void;
     onDelete: (id: string) => void;
     tickets: SupportTicket[];
+    canEdit?: boolean;
+    canDelete?: boolean;
+    canCreate?: boolean;
 }
 
 /**
@@ -24,7 +27,10 @@ export const AppointmentModal: React.FC<AppointmentModalProps> = ({
     setFormData,
     onSave,
     onDelete,
-    tickets
+    tickets,
+    canEdit = false,
+    canDelete = false,
+    canCreate = false
 }) => {
     if (!isOpen) return null;
 
@@ -47,7 +53,8 @@ export const AppointmentModal: React.FC<AppointmentModalProps> = ({
                     {/* Título */}
                     <div>
                         <input
-                            className="w-full text-lg font-bold text-slate-800 dark:text-white bg-transparent border-0 border-b-2 border-slate-200 dark:border-slate-700 focus:ring-0 focus:border-primary px-0 py-2 placeholder-slate-300 outline-none"
+                            disabled={!canEdit && (!canCreate || !!formData.id)}
+                            className="w-full text-lg font-bold text-slate-800 dark:text-white bg-transparent border-0 border-b-2 border-slate-200 dark:border-slate-700 focus:ring-0 focus:border-primary px-0 py-2 placeholder-slate-300 outline-none disabled:opacity-70 disabled:cursor-not-allowed"
                             placeholder="Adicionar título"
                             value={formData.title || ''}
                             autoFocus
@@ -60,7 +67,8 @@ export const AppointmentModal: React.FC<AppointmentModalProps> = ({
                         <span className="material-symbols-outlined text-slate-400">calendar_month</span>
                         <input
                             type="datetime-local"
-                            className="bg-transparent border-none p-0 focus:ring-0 w-full text-sm font-bold outline-none"
+                            disabled={!canEdit && (!canCreate || !!formData.id)}
+                            className="bg-transparent border-none p-0 focus:ring-0 w-full text-sm font-bold outline-none disabled:opacity-70 disabled:cursor-not-allowed"
                             value={formData.date ? formData.date.slice(0, 16) : ''}
                             onChange={e => {
                                 if (e.target.value) {
@@ -78,7 +86,8 @@ export const AppointmentModal: React.FC<AppointmentModalProps> = ({
                             <input
                                 type="number" 
                                 step="0.5"
-                                className="bg-transparent border-none p-0 focus:ring-0 w-full text-sm font-bold h-6 outline-none"
+                                disabled={!canEdit && (!canCreate || !!formData.id)}
+                                className="bg-transparent border-none p-0 focus:ring-0 w-full text-sm font-bold h-6 outline-none disabled:opacity-70 disabled:cursor-not-allowed"
                                 value={formData.durationHours || ''}
                                 onChange={e => setFormData({ ...formData, durationHours: Number(e.target.value) })}
                             />
@@ -86,7 +95,8 @@ export const AppointmentModal: React.FC<AppointmentModalProps> = ({
                         <div className="bg-slate-50 dark:bg-slate-800 p-3 rounded-xl border border-slate-100 dark:border-slate-700">
                             <label className="text-[10px] font-black uppercase tracking-widest text-slate-400 block mb-1">Status</label>
                             <select
-                                className="bg-transparent border-none p-0 focus:ring-0 w-full text-sm font-bold h-6 appearance-none outline-none"
+                                disabled={!canEdit && (!canCreate || !!formData.id)}
+                                className="bg-transparent border-none p-0 focus:ring-0 w-full text-sm font-bold h-6 appearance-none outline-none disabled:opacity-70 disabled:cursor-not-allowed"
                                 value={formData.status || ''}
                                 onChange={e => setFormData({ ...formData, status: e.target.value as Appointment['status'] })}
                             >
@@ -103,7 +113,8 @@ export const AppointmentModal: React.FC<AppointmentModalProps> = ({
                         <span className="material-symbols-outlined text-slate-400">person_add</span>
                         <input
                             type="text"
-                            className="bg-transparent border-none p-0 focus:ring-0 w-full outline-none"
+                            disabled={!canEdit && (!canCreate || !!formData.id)}
+                            className="bg-transparent border-none p-0 focus:ring-0 w-full outline-none disabled:opacity-70 disabled:cursor-not-allowed"
                             placeholder="Adicionar cliente convidado"
                             value={formData.clientName || ''}
                             onChange={e => setFormData({ ...formData, clientName: e.target.value })}
@@ -115,7 +126,8 @@ export const AppointmentModal: React.FC<AppointmentModalProps> = ({
                         <span className="material-symbols-outlined text-slate-400">link</span>
                         <input
                             type="text"
-                            className="bg-transparent border-none p-0 focus:ring-0 w-full text-blue-500 font-medium outline-none"
+                            disabled={!canEdit && (!canCreate || !!formData.id)}
+                            className="bg-transparent border-none p-0 focus:ring-0 w-full text-blue-500 font-medium outline-none disabled:opacity-70 disabled:cursor-not-allowed"
                             placeholder="Adicionar link de vídeo ou local..."
                             value={formData.location || ''}
                             onChange={e => setFormData({ ...formData, location: e.target.value })}
@@ -126,7 +138,8 @@ export const AppointmentModal: React.FC<AppointmentModalProps> = ({
                     <div className="flex items-center gap-4 text-sm font-medium text-slate-600 dark:text-slate-300 border-b border-slate-100 dark:border-slate-800 pb-3">
                         <span className="material-symbols-outlined text-slate-400">confirmation_number</span>
                         <select
-                            className="bg-transparent border-none p-0 focus:ring-0 w-full font-medium appearance-none text-ellipsis overflow-hidden whitespace-nowrap outline-none"
+                            disabled={!canEdit && (!canCreate || !!formData.id)}
+                            className="bg-transparent border-none p-0 focus:ring-0 w-full font-medium appearance-none text-ellipsis overflow-hidden whitespace-nowrap outline-none disabled:opacity-70 disabled:cursor-not-allowed"
                             value={formData.ticketId || ''}
                             onChange={e => setFormData({ ...formData, ticketId: e.target.value })}
                         >
@@ -147,7 +160,8 @@ export const AppointmentModal: React.FC<AppointmentModalProps> = ({
                     <div className="flex gap-4 border-b border-slate-100 dark:border-slate-800 pb-3 h-20">
                         <span className="material-symbols-outlined text-slate-400 mt-1">notes</span>
                         <textarea
-                            className="bg-transparent border-none p-0 focus:ring-0 w-full resize-none text-sm h-full outline-none"
+                            disabled={!canEdit && (!canCreate || !!formData.id)}
+                            className="bg-transparent border-none p-0 focus:ring-0 w-full resize-none text-sm h-full outline-none disabled:opacity-70 disabled:cursor-not-allowed"
                             placeholder="Adicionar descrição"
                             value={formData.description || ''}
                             onChange={e => setFormData({ ...formData, description: e.target.value })}
@@ -166,15 +180,16 @@ export const AppointmentModal: React.FC<AppointmentModalProps> = ({
                             <button
                                 key={c.id}
                                 type="button"
+                                disabled={!canEdit && (!canCreate || !!formData.id)}
                                 onClick={() => setFormData({ ...formData, color: c.color })}
-                                className={`w-6 h-6 rounded-full ${c.bg} focus:ring-2 ring-offset-2 transition-all ${formData.color?.includes(c.id) ? 'ring-2' : ''}`}
+                                className={`w-6 h-6 rounded-full ${c.bg} focus:ring-2 ring-offset-2 transition-all ${formData.color?.includes(c.id) ? 'ring-2' : ''} disabled:opacity-50 disabled:cursor-not-allowed`}
                             ></button>
                         ))}
                     </div>
                 </div>
 
                 <div className="p-5 bg-slate-50 dark:bg-slate-950/80 border-t border-slate-100 dark:border-slate-800 flex justify-between gap-3 shrink-0">
-                    {formData.id ? (
+                    {formData.id && canDelete ? (
                         <button 
                             onClick={() => onDelete(formData.id!)} 
                             className="px-4 py-2 rounded-xl text-rose-600 bg-rose-50 hover:bg-rose-100 font-bold text-sm transition mr-auto active:scale-95"
@@ -189,15 +204,17 @@ export const AppointmentModal: React.FC<AppointmentModalProps> = ({
                             onClick={onClose} 
                             className="px-6 py-2.5 rounded-xl text-slate-600 dark:text-slate-400 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 hover:bg-slate-50 dark:hover:bg-slate-800 font-bold text-sm transition active:scale-95"
                         >
-                            Cancelar
+                            {(!canEdit && formData.id) ? 'Fechar' : 'Cancelar'}
                         </button>
-                        <button 
-                            onClick={onSave} 
-                            disabled={!formData.title}
-                            className="px-8 py-2.5 rounded-xl text-white bg-slate-900 dark:bg-primary hover:bg-slate-800 dark:hover:bg-blue-600 shadow-xl shadow-slate-900/10 font-bold text-sm transition active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed"
-                        >
-                            Salvar
-                        </button>
+                        {(canEdit || (canCreate && !formData.id)) && (
+                            <button 
+                                onClick={onSave} 
+                                disabled={!formData.title}
+                                className="px-8 py-2.5 rounded-xl text-white bg-slate-900 dark:bg-primary hover:bg-slate-800 dark:hover:bg-blue-600 shadow-xl shadow-slate-900/10 font-bold text-sm transition active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed"
+                            >
+                                Salvar
+                            </button>
+                        )}
                     </div>
                 </div>
             </div>

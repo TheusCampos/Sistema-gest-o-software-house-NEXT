@@ -31,6 +31,7 @@ interface TicketDetailsDrawerProps {
     handleToggleTask: (id: string, completed: boolean) => void;
     handleDeleteTask: (id: string) => void;
     kanbanColumns: Array<{ id: SupportTicket['status']; label: string; color: string; bg: string }>;
+    canEdit?: boolean;
 }
 
 export const TicketDetailsDrawer: React.FC<TicketDetailsDrawerProps> = ({
@@ -59,7 +60,8 @@ export const TicketDetailsDrawer: React.FC<TicketDetailsDrawerProps> = ({
     cancelEditTask,
     handleToggleTask,
     handleDeleteTask,
-    kanbanColumns
+    kanbanColumns,
+    canEdit = false
 }) => {
     if (!isOpen || !ticket) return null;
 
@@ -107,10 +109,12 @@ export const TicketDetailsDrawer: React.FC<TicketDetailsDrawerProps> = ({
                                 Desbloquear
                             </button>
                         )}
-                        <Link href={`/tickets/${ticket.id}`} className="px-3 py-1.5 bg-slate-100 hover:bg-slate-200 dark:bg-slate-800 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-300 rounded-lg text-xs font-bold transition-all flex items-center gap-1.5">
-                            <span className="material-symbols-outlined text-[16px]">edit</span>
-                            Editar Ticket
-                        </Link>
+                        {canEdit && (
+                            <Link href={`/tickets/${ticket.id}`} className="px-3 py-1.5 bg-slate-100 hover:bg-slate-200 dark:bg-slate-800 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-300 rounded-lg text-xs font-bold transition-all flex items-center gap-1.5">
+                                <span className="material-symbols-outlined text-[16px]">edit</span>
+                                Editar Ticket
+                            </Link>
+                        )}
                         <button onClick={onClose} className="w-9 h-9 flex items-center justify-center text-slate-400 hover:text-slate-600 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-lg transition-all">
                             <span className="material-symbols-outlined text-[24px]">close</span>
                         </button>
@@ -214,11 +218,11 @@ export const TicketDetailsDrawer: React.FC<TicketDetailsDrawerProps> = ({
                         <div className="p-6 space-y-6 animate-fadeIn">
                             <div className="flex justify-between items-center mb-2">
                                 <h3 className="text-sm font-black text-slate-900 dark:text-white uppercase tracking-wide">Checklist de Resolução</h3>
-                                {!isTicketClosed && (
+                                {!isTicketClosed && canEdit && (
                                     <button onClick={handleCreateTask} className="text-xs font-bold text-primary hover:underline">+ Adicionar Item</button>
                                 )}
                             </div>
-                            {isAddingTask && !isTicketClosed && (
+                            {isAddingTask && !isTicketClosed && canEdit && (
                                 <div className="flex items-center gap-2">
                                     <input
                                         value={newTaskTitle}
@@ -238,7 +242,7 @@ export const TicketDetailsDrawer: React.FC<TicketDetailsDrawerProps> = ({
                                             <div className="relative flex items-center mt-0.5">
                                                 <input
                                                     type="checkbox"
-                                                    disabled={isTicketClosed}
+                                                    disabled={isTicketClosed || !canEdit}
                                                     checked={task.status === 'Done'}
                                                     onChange={(e) => handleToggleTask(task.id, e.target.checked)}
                                                     className="peer h-5 w-5 appearance-none rounded-md border border-slate-300 dark:border-slate-600 checked:border-emerald-500 checked:bg-emerald-500 transition-all disabled:cursor-not-allowed cursor-pointer"
@@ -265,7 +269,7 @@ export const TicketDetailsDrawer: React.FC<TicketDetailsDrawerProps> = ({
                                                     </>
                                                 )}
                                             </div>
-                                            {!isTicketClosed && (
+                                            {!isTicketClosed && canEdit && (
                                                 <div className="flex items-center gap-2 shrink-0">
                                                     <button
                                                         onClick={() => startEditTask(task.id, task.title)}
@@ -330,38 +334,40 @@ export const TicketDetailsDrawer: React.FC<TicketDetailsDrawerProps> = ({
                 </div>
 
                 {/* Ações do Rodapé */}
-                <div className="p-4 bg-white dark:bg-slate-900 border-t border-slate-200 dark:border-slate-800 shrink-0">
-                    {isTicketClosed ? (
-                        <div className="p-4 bg-slate-50 dark:bg-slate-800 rounded-xl border border-slate-200 dark:border-slate-700 flex items-center justify-center gap-3 text-slate-500">
-                            <span className="material-symbols-outlined text-2xl">lock</span>
-                            <span className="text-sm font-bold">Este ticket foi encerrado e não pode ser alterado.</span>
-                        </div>
-                    ) : (
-                        <>
-                            <div className="relative">
-                                <textarea
-                                    value={replyText}
-                                    onChange={(e) => setReplyText(e.target.value)}
-                                    placeholder="Escreva uma resposta interna ou para o cliente..."
-                                    className="w-full pl-4 pr-12 py-3 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl text-sm focus:ring-2 focus:ring-primary outline-none resize-none h-12 focus:h-24 transition-all"
-                                />
-                                <button onClick={handleSendComment} className="absolute right-2 bottom-2 p-2 bg-primary text-white rounded-lg hover:bg-blue-600 transition-colors shadow-sm disabled:opacity-50 disabled:cursor-not-allowed" disabled={!replyText.trim()}>
-                                    <span className="material-symbols-outlined text-[20px]">send</span>
-                                </button>
+                {canEdit && (
+                    <div className="p-4 bg-white dark:bg-slate-900 border-t border-slate-200 dark:border-slate-800 shrink-0">
+                        {isTicketClosed ? (
+                            <div className="p-4 bg-slate-50 dark:bg-slate-800 rounded-xl border border-slate-200 dark:border-slate-700 flex items-center justify-center gap-3 text-slate-500">
+                                <span className="material-symbols-outlined text-2xl">lock</span>
+                                <span className="text-sm font-bold">Este ticket foi encerrado e não pode ser alterado.</span>
                             </div>
-                            <div className="flex justify-between items-center mt-3 px-1">
-                                <div className="flex gap-2">
-                                    <button className="p-2 text-slate-400 hover:text-slate-600 dark:hover:text-slate-300 transition-colors" title="Anexar Arquivo"><span className="material-symbols-outlined text-[20px]">attach_file</span></button>
-                                    <button className="p-2 text-slate-400 hover:text-slate-600 dark:hover:text-slate-300 transition-colors" title="Inserir Template"><span className="material-symbols-outlined text-[20px]">bolt</span></button>
+                        ) : (
+                            <>
+                                <div className="relative">
+                                    <textarea
+                                        value={replyText}
+                                        onChange={(e) => setReplyText(e.target.value)}
+                                        placeholder="Escreva uma resposta interna ou para o cliente..."
+                                        className="w-full pl-4 pr-12 py-3 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl text-sm focus:ring-2 focus:ring-primary outline-none resize-none h-12 focus:h-24 transition-all"
+                                    />
+                                    <button onClick={handleSendComment} className="absolute right-2 bottom-2 p-2 bg-primary text-white rounded-lg hover:bg-blue-600 transition-colors shadow-sm disabled:opacity-50 disabled:cursor-not-allowed" disabled={!replyText.trim()}>
+                                        <span className="material-symbols-outlined text-[20px]">send</span>
+                                    </button>
                                 </div>
-                                <div className="flex items-center gap-2">
-                                    <span className="text-[10px] font-bold uppercase text-slate-400 tracking-wider">Ações:</span>
-                                    <button className="px-3 py-1.5 bg-emerald-50 text-emerald-600 hover:bg-emerald-100 rounded-lg text-xs font-bold transition-colors">Resolver</button>
+                                <div className="flex justify-between items-center mt-3 px-1">
+                                    <div className="flex gap-2">
+                                        <button className="p-2 text-slate-400 hover:text-slate-600 dark:hover:text-slate-300 transition-colors" title="Anexar Arquivo"><span className="material-symbols-outlined text-[20px]">attach_file</span></button>
+                                        <button className="p-2 text-slate-400 hover:text-slate-600 dark:hover:text-slate-300 transition-colors" title="Inserir Template"><span className="material-symbols-outlined text-[20px]">bolt</span></button>
+                                    </div>
+                                    <div className="flex items-center gap-2">
+                                        <span className="text-[10px] font-bold uppercase text-slate-400 tracking-wider">Ações:</span>
+                                        <button className="px-3 py-1.5 bg-emerald-50 text-emerald-600 hover:bg-emerald-100 rounded-lg text-xs font-bold transition-colors">Resolver</button>
+                                    </div>
                                 </div>
-                            </div>
-                        </>
-                    )}
-                </div>
+                            </>
+                        )}
+                    </div>
+                )}
             </div>
         </div>
     );

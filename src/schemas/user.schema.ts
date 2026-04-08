@@ -16,6 +16,8 @@ export const userPermissionsSchema = z.object({
   sellers: crudPermissionsSchema,
   appointments: crudPermissionsSchema,
   performance: crudPermissionsSchema,
+  templates: crudPermissionsSchema,
+  'service-types': crudPermissionsSchema,
 });
 
 export const userRoleEnum = z.enum([

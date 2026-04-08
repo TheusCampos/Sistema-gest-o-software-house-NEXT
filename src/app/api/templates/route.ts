@@ -4,6 +4,7 @@ import { db } from "@/lib/db";
 import { ImplementationTemplate } from "@/types";
 import { forbiddenResponse } from "@/lib/session";
 import { withAuth } from "@/lib/api-wrapper";
+import { checkModulePermission, getTenantFilter } from "@/lib/security";
 
 export const dynamic = "force-dynamic";
 
@@ -25,15 +26,12 @@ type StepRow = {
 
 import { SessionUser } from "@/lib/session";
 
-function ensureAdmin(session: SessionUser): NextResponse | null {
-    const currentRole = session.role?.trim().toLowerCase();
-    if (currentRole !== "admin" && currentRole !== "desenvolvedor") {
-        return forbiddenResponse("Apenas administradores podem gerenciar templates.");
-    }
-    return null;
-}
+
 
 export const GET = withAuth(async (_request, session) => {
+    const permissionError = await checkModulePermission(session, 'templates', 'view');
+    if (permissionError) return permissionError;
+
     const templatesResult = await db.execute(sql`
         SELECT
             id,
@@ -42,8 +40,8 @@ export const GET = withAuth(async (_request, session) => {
             system_type,
             description,
             requires_bank_config
-        FROM implementation_templates
-        WHERE tenant_id = ${session.tenantId} AND active = true
+        FROM implementation_templates t
+        WHERE ${getTenantFilter(session)} AND active = true
         ORDER BY created_at DESC
     `);
 
@@ -60,8 +58,8 @@ export const GET = withAuth(async (_request, session) => {
             template_id,
             label,
             required
-        FROM implementation_steps
-        WHERE template_id IN (${sql.join(templateIds.map(id => sql`${id}`), sql`, `)}) AND tenant_id = ${session.tenantId}
+        FROM implementation_steps t
+        WHERE template_id IN (${sql.join(templateIds.map(id => sql`${id}`), sql`, `)}) AND ${getTenantFilter(session)}
         ORDER BY position ASC
     `);
 
@@ -90,8 +88,8 @@ export const GET = withAuth(async (_request, session) => {
 });
 
 export const POST = withAuth(async (request, session) => {
-    const adminError = ensureAdmin(session);
-    if (adminError) return adminError;
+    const permissionError = await checkModulePermission(session, 'templates', 'create');
+    if (permissionError) return permissionError;
 
     const body = (await request.json()) as ImplementationTemplate;
 
@@ -131,8 +129,8 @@ export const POST = withAuth(async (request, session) => {
 });
 
 export const PUT = withAuth(async (request, session) => {
-    const adminError = ensureAdmin(session);
-    if (adminError) return adminError;
+    const permissionError = await checkModulePermission(session, 'templates', 'edit');
+    if (permissionError) return permissionError;
 
     const body = (await request.json()) as ImplementationTemplate;
 
@@ -174,8 +172,8 @@ export const PUT = withAuth(async (request, session) => {
 });
 
 export const DELETE = withAuth(async (request, session) => {
-    const adminError = ensureAdmin(session);
-    if (adminError) return adminError;
+    const permissionError = await checkModulePermission(session, 'templates', 'delete');
+    if (permissionError) return permissionError;
 
     const { searchParams } = new URL(request.url);
     const id = searchParams.get("id");

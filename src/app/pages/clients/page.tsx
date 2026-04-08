@@ -16,6 +16,9 @@ const ClientsList: React.FC = () => {
     const role = currentUser?.role?.toLowerCase();
     const isAdmin = role === 'admin' || role === 'desenvolvedor';
     const canView = isAdmin || currentUser?.permissions?.clients?.view;
+    const canCreate = isAdmin || currentUser?.permissions?.clients?.create;
+    const canEdit = isAdmin || currentUser?.permissions?.clients?.edit;
+    const canDelete = isAdmin || currentUser?.permissions?.clients?.delete;
 
     // Carrega os clientes ao montar o componente
     useEffect(() => {
@@ -185,10 +188,12 @@ const ClientsList: React.FC = () => {
                     <h1 className="text-3xl md:text-4xl font-black text-slate-900 dark:text-white tracking-tight">Base de Clientes</h1>
                     <p className="text-slate-500 dark:text-slate-400 text-sm md:text-base">Gestão centralizada de contas e licenciamento técnico.</p>
                 </div>
-                <Link href="/clients/new" className="flex items-center justify-center gap-2 bg-primary hover:bg-blue-600 text-white px-8 py-3.5 rounded-2xl font-bold shadow-xl shadow-primary/20 transition-all active:scale-95 shrink-0">
-                    <span className="material-symbols-outlined">person_add</span>
-                    Novo Cliente
-                </Link>
+                {canCreate && (
+                    <Link href="/clients/new" className="flex items-center justify-center gap-2 bg-primary hover:bg-blue-600 text-white px-8 py-3.5 rounded-2xl font-bold shadow-xl shadow-primary/20 transition-all active:scale-95 shrink-0">
+                        <span className="material-symbols-outlined">person_add</span>
+                        Novo Cliente
+                    </Link>
+                )}
             </div>
 
             <div className="px-4">
@@ -350,15 +355,21 @@ const ClientsList: React.FC = () => {
                                                     {visibleColumns.actions && (
                                                         <td className="w-full md:w-32 md:shrink-0 flex items-center justify-end md:h-full mt-2 md:mt-0 px-0 md:px-8 py-2 md:py-[6px]">
                                                             <div className="flex items-center justify-end gap-1 h-full w-full">
-                                                                <Link href={`/clients/${client.id}?readonly=true`} className="p-2 text-slate-400 hover:text-primary transition-colors" title="Visualizar">
-                                                                    <span className="material-symbols-outlined text-[20px]">visibility</span>
-                                                                </Link>
-                                                                <Link href={`/clients/${client.id}`} className="p-2 text-slate-400 hover:text-amber-500 transition-colors" title="Editar">
-                                                                    <span className="material-symbols-outlined text-[20px]">edit</span>
-                                                                </Link>
-                                                                <button onClick={() => handleOpenDeleteModal(client)} className="p-2 text-slate-400 hover:text-rose-600 transition-colors" title="Excluir">
-                                                                    <span className="material-symbols-outlined text-[20px]">delete</span>
-                                                                </button>
+                                                                {canView && (
+                                                                    <Link href={`/clients/${client.id}?readonly=true`} className="p-2 text-slate-400 hover:text-primary transition-colors" title="Visualizar">
+                                                                        <span className="material-symbols-outlined text-[20px]">visibility</span>
+                                                                    </Link>
+                                                                )}
+                                                                {canEdit && (
+                                                                    <Link href={`/clients/${client.id}`} className="p-2 text-slate-400 hover:text-amber-500 transition-colors" title="Editar">
+                                                                        <span className="material-symbols-outlined text-[20px]">edit</span>
+                                                                    </Link>
+                                                                )}
+                                                                {canDelete && (
+                                                                    <button onClick={() => handleOpenDeleteModal(client)} className="p-2 text-slate-400 hover:text-rose-600 transition-colors" title="Excluir">
+                                                                        <span className="material-symbols-outlined text-[20px]">delete</span>
+                                                                    </button>
+                                                                )}
                                                             </div>
                                                         </td>
                                                     )}

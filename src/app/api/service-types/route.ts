@@ -3,6 +3,7 @@ import { sql } from "drizzle-orm";
 import { db } from "@/lib/db";
 import { forbiddenResponse, SessionUser } from "@/lib/session";
 import { withAuth } from "@/lib/api-wrapper";
+import { checkModulePermission, getTenantFilter } from "@/lib/security";
 
 export const dynamic = "force-dynamic";
 
@@ -16,15 +17,12 @@ interface ServiceTypePayload {
     linkedTemplateId?: string;
 }
 
-function ensureAdmin(session: SessionUser): NextResponse | null {
-    const currentRole = session.role?.trim().toLowerCase();
-    if (currentRole !== "admin" && currentRole !== "desenvolvedor") {
-        return forbiddenResponse("Apenas administradores podem gerenciar tipos de atendimento.");
-    }
-    return null;
-}
+
 
 export const GET = withAuth(async (_request, session) => {
+    const permissionError = await checkModulePermission(session, 'service-types', 'view');
+    if (permissionError) return permissionError;
+
     const result = await db.execute(sql`
         SELECT
             id,
@@ -36,8 +34,8 @@ export const GET = withAuth(async (_request, session) => {
             category,
             image,
             linked_template_id as "linkedTemplateId"
-        FROM service_types
-        WHERE tenant_id = ${session.tenantId}
+        FROM service_types t
+        WHERE ${getTenantFilter(session)}
         ORDER BY name
     `);
 
@@ -45,8 +43,8 @@ export const GET = withAuth(async (_request, session) => {
 });
 
 export const POST = withAuth(async (request, session) => {
-    const adminError = ensureAdmin(session);
-    if (adminError) return adminError;
+    const permissionError = await checkModulePermission(session, 'service-types', 'create');
+    if (permissionError) return permissionError;
 
     const body = (await request.json()) as ServiceTypePayload;
 
@@ -80,8 +78,8 @@ export const POST = withAuth(async (request, session) => {
 });
 
 export const PUT = withAuth(async (request, session) => {
-    const adminError = ensureAdmin(session);
-    if (adminError) return adminError;
+    const permissionError = await checkModulePermission(session, 'service-types', 'edit');
+    if (permissionError) return permissionError;
 
     const body = (await request.json()) as ServiceTypePayload & { id?: string };
 
@@ -107,8 +105,8 @@ export const PUT = withAuth(async (request, session) => {
 });
 
 export const DELETE = withAuth(async (request, session) => {
-    const adminError = ensureAdmin(session);
-    if (adminError) return adminError;
+    const permissionError = await checkModulePermission(session, 'service-types', 'delete');
+    if (permissionError) return permissionError;
 
     const { searchParams } = new URL(request.url);
     const id = searchParams.get("id");

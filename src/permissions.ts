@@ -23,6 +23,8 @@ export const EMPTY_PERMISSIONS: UserPermissions = {
     sellers: NONE,
     appointments: NONE,
     performance: NONE,
+    templates: NONE,
+    'service-types': NONE,
 };
 
 export const ADMIN_PERMISSIONS: UserPermissions = {
@@ -34,6 +36,8 @@ export const ADMIN_PERMISSIONS: UserPermissions = {
     sellers: FULL,
     appointments: FULL,
     performance: FULL,
+    templates: FULL,
+    'service-types': FULL,
 };
 
 export const DEFAULT_PERMISSIONS: UserPermissions = {
@@ -45,6 +49,8 @@ export const DEFAULT_PERMISSIONS: UserPermissions = {
     sellers: NONE,
     appointments: { ...NONE, view: true },
     performance: NONE,
+    templates: { ...NONE, view: true },
+    'service-types': { ...NONE, view: true },
 };
 
 export const VENDEDOR_PERMISSIONS: UserPermissions = {
@@ -56,6 +62,8 @@ export const VENDEDOR_PERMISSIONS: UserPermissions = {
     sellers: { ...FULL, delete: false },
     appointments: { ...FULL, delete: false },
     performance: { ...FULL, delete: false },
+    templates: { ...FULL, delete: false },
+    'service-types': { ...FULL, delete: false },
 };
 
 export const SUPORTE_PERMISSIONS: UserPermissions = {
@@ -67,6 +75,8 @@ export const SUPORTE_PERMISSIONS: UserPermissions = {
     sellers: NONE,
     appointments: { ...FULL, delete: false },
     performance: NONE,
+    templates: { ...NONE, view: true },
+    'service-types': { ...NONE, view: true },
 };
 
 export const CLIENT_PERMISSIONS: UserPermissions = {
@@ -78,6 +88,8 @@ export const CLIENT_PERMISSIONS: UserPermissions = {
     sellers: NONE,
     appointments: { ...NONE, view: true, create: true },
     performance: NONE,
+    templates: { ...NONE, view: true },
+    'service-types': { ...NONE, view: true },
 };
 
 export const TECHNICIAN_PERMISSIONS: UserPermissions = {
@@ -89,6 +101,8 @@ export const TECHNICIAN_PERMISSIONS: UserPermissions = {
     sellers: NONE,
     appointments: { ...FULL, delete: false },
     performance: NONE,
+    templates: { ...NONE, view: true },
+    'service-types': { ...NONE, view: true },
 };
 
 export const PERMISSIONS_TEMPLATES: Record<string, UserPermissions> = {

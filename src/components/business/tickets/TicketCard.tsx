@@ -11,6 +11,7 @@ interface TicketCardProps {
     onDragEnd: (e: React.DragEvent) => void;
     onCardDrop: (e: React.DragEvent, colStatus: SupportTicket['status'], ticketId: string) => void;
     onClick: (ticket: SupportTicket) => void;
+    canEdit?: boolean;
 }
 
 export const TicketCard: React.FC<TicketCardProps> = ({
@@ -20,25 +21,26 @@ export const TicketCard: React.FC<TicketCardProps> = ({
     onDragStart,
     onDragEnd,
     onCardDrop,
-    onClick
+    onClick,
+    canEdit = false
 }) => {
     return (
         <div
-            draggable={ticket.status !== 'Closed'}
-            onDragStart={(e) => onDragStart(e, ticket)}
-            onDragEnd={onDragEnd}
+            draggable={canEdit && ticket.status !== 'Closed'}
+            onDragStart={(e) => canEdit && onDragStart(e, ticket)}
+            onDragEnd={(e) => canEdit && onDragEnd(e)}
             onDragOver={(e) => {
-                if (draggingTicketId && draggingTicketId !== ticket.id) {
+                if (canEdit && draggingTicketId && draggingTicketId !== ticket.id) {
                     e.preventDefault();
                     e.dataTransfer.dropEffect = "move";
                 }
             }}
-            onDrop={(e) => onCardDrop(e, colStatus, ticket.id)}
+            onDrop={(e) => canEdit && onCardDrop(e, colStatus, ticket.id)}
             onClick={() => onClick(ticket)}
             className={`bg-white dark:bg-slate-800 p-4 rounded-xl border border-slate-200 dark:border-slate-700 shadow-sm transition-all group relative overflow-hidden ${
                 draggingTicketId === ticket.id ? 'opacity-40 rotate-1 scale-95' : 'opacity-100'
             } ${
-                ticket.status === 'Closed' 
+                ticket.status === 'Closed' || !canEdit
                 ? 'cursor-not-allowed opacity-80' 
                 : 'cursor-grab active:cursor-grabbing hover:shadow-md hover:border-primary/30 dark:hover:border-primary/30'
             }`}

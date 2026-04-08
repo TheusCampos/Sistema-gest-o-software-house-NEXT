@@ -3,6 +3,7 @@ import { sql } from "drizzle-orm";
 import { db } from "@/lib/db";
 import { Equipment, EquipmentStatus, EquipmentType } from "@/types";
 import { withAuth } from "@/lib/api-wrapper";
+import { checkModulePermission, getTenantFilter } from "@/lib/security";
 
 export const dynamic = "force-dynamic";
 
@@ -68,12 +69,15 @@ const mapEquipment = (row: EquipmentDbRow): Equipment => ({
 });
 
 export const GET = withAuth(async (request, session) => {
+    const permissionError = await checkModulePermission(session, 'equipment', 'view');
+    if (permissionError) return permissionError;
+
     const { searchParams } = new URL(request.url);
     const showInactive = searchParams.get("showInactive") === "true";
 
     const result = await db.execute(sql`
-        SELECT * FROM equipment
-        WHERE tenant_id = ${session.tenantId}
+        SELECT * FROM equipment t
+        WHERE ${getTenantFilter(session)}
           ${!showInactive ? sql`AND active = true` : sql``}
         ORDER BY registration_date DESC, name ASC
     `);
@@ -82,6 +86,9 @@ export const GET = withAuth(async (request, session) => {
 });
 
 export const POST = withAuth(async (request, session) => {
+    const permissionError = await checkModulePermission(session, 'equipment', 'create');
+    if (permissionError) return permissionError;
+
     const body = (await request.json()) as Equipment;
 
     const result = await db.execute(sql`
@@ -106,6 +113,9 @@ export const POST = withAuth(async (request, session) => {
 });
 
 export const PUT = withAuth(async (request, session) => {
+    const permissionError = await checkModulePermission(session, 'equipment', 'edit');
+    if (permissionError) return permissionError;
+
     const body = (await request.json()) as Equipment;
 
     if (!body.id) {
@@ -151,6 +161,9 @@ export const PUT = withAuth(async (request, session) => {
 });
 
 export const DELETE = withAuth(async (request, session) => {
+    const permissionError = await checkModulePermission(session, 'equipment', 'delete');
+    if (permissionError) return permissionError;
+
     const { searchParams } = new URL(request.url);
     const id = searchParams.get("id");
 

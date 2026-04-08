@@ -19,6 +19,13 @@ const ContractList: React.FC = () => {
         }
     }, [currentUser, fetchSellers, fetchContracts]);
 
+    const role = currentUser?.role?.toLowerCase();
+    const isAdmin = role === 'admin' || role === 'desenvolvedor';
+    const canView = isAdmin || currentUser?.permissions?.contracts?.view;
+    const canCreate = isAdmin || currentUser?.permissions?.contracts?.create;
+    const canEdit = isAdmin || currentUser?.permissions?.contracts?.edit;
+    const canDelete = isAdmin || currentUser?.permissions?.contracts?.delete;
+
     // Busca textual (cliente, id interno, número do contrato)
     const [searchTerm, setSearchTerm] = useState('');
     // Filtro por vendedor responsável
@@ -111,10 +118,12 @@ const ContractList: React.FC = () => {
                     <p className="text-slate-900 dark:text-slate-50 text-4xl font-black leading-tight tracking-tight">Gestão de Contratos</p>
                     <p className="text-slate-500 dark:text-slate-400 text-base">Monitore faturamento recorrente, tipos de acordo e renovações.</p>
                 </div>
-                <Link href="/contracts/new" className="flex items-center justify-center rounded-xl h-12 px-6 bg-primary text-white text-sm font-bold shadow-lg shadow-primary/20 hover:bg-blue-700 hover:-translate-y-0.5 transition-all gap-2 active:scale-95">
-                    <span className="material-symbols-outlined">add_task</span>
-                    Novo Contrato
-                </Link>
+                {canCreate && (
+                    <Link href="/contracts/new" className="flex items-center justify-center rounded-xl h-12 px-6 bg-primary text-white text-sm font-bold shadow-lg shadow-primary/20 hover:bg-blue-700 hover:-translate-y-0.5 transition-all gap-2 active:scale-95">
+                        <span className="material-symbols-outlined">add_task</span>
+                        Novo Contrato
+                    </Link>
+                )}
             </div>
 
             <div className="px-4">
@@ -254,15 +263,21 @@ const ContractList: React.FC = () => {
                                             {visibleColumns.actions && (
                                                 <td className="px-0 md:px-4 py-2 md:py-[6px] whitespace-nowrap text-right w-full md:w-40 md:shrink-0 flex items-center justify-end">
                                                     <div className="flex items-center justify-end gap-2 w-full">
-                                                        <Link href={`/contracts/${contract.id}?readonly=true`} className="p-2 text-slate-400 hover:text-primary transition-colors hover:bg-primary/10 rounded-lg" title="Visualizar">
-                                                            <span className="material-symbols-outlined text-[20px]">visibility</span>
-                                                        </Link>
-                                                        <Link href={`/contracts/${contract.id}`} className="p-2 text-slate-400 hover:text-amber-500 transition-colors hover:bg-amber-500/10 rounded-lg" title="Editar">
-                                                            <span className="material-symbols-outlined text-[20px]">edit</span>
-                                                        </Link>
-                                                        <button onClick={() => handleDeleteClick(contract)} className="p-2 text-slate-400 hover:text-rose-600 transition-colors hover:bg-rose-600/10 rounded-lg" title="Excluir">
-                                                            <span className="material-symbols-outlined text-[20px]">delete</span>
-                                                        </button>
+                                                        {canView && (
+                                                            <Link href={`/contracts/${contract.id}?readonly=true`} className="p-2 text-slate-400 hover:text-primary transition-colors hover:bg-primary/10 rounded-lg" title="Visualizar">
+                                                                <span className="material-symbols-outlined text-[20px]">visibility</span>
+                                                            </Link>
+                                                        )}
+                                                        {canEdit && (
+                                                            <Link href={`/contracts/${contract.id}`} className="p-2 text-slate-400 hover:text-amber-500 transition-colors hover:bg-amber-500/10 rounded-lg" title="Editar">
+                                                                <span className="material-symbols-outlined text-[20px]">edit</span>
+                                                            </Link>
+                                                        )}
+                                                        {canDelete && (
+                                                            <button onClick={() => handleDeleteClick(contract)} className="p-2 text-slate-400 hover:text-rose-600 transition-colors hover:bg-rose-600/10 rounded-lg" title="Excluir">
+                                                                <span className="material-symbols-outlined text-[20px]">delete</span>
+                                                            </button>
+                                                        )}
                                                     </div>
                                                 </td>
                                             )}

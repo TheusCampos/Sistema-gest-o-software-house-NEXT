@@ -39,6 +39,13 @@ const getCategoryStyle = (category: string) => {
 export default function ServiceTypesPage() {
     const { implementationTemplates: availableTemplates, currentUser } = useApp();
     const { deleteModal, openDeleteModal, closeDeleteModal, setReason, isReasonValid } = useDeleteModal();
+
+    const role = currentUser?.role?.toLowerCase();
+    const isAdmin = role === 'admin' || role === 'desenvolvedor';
+    const canView = isAdmin || currentUser?.permissions?.['service-types']?.view;
+    const canCreate = isAdmin || currentUser?.permissions?.['service-types']?.create;
+    const canEdit = isAdmin || currentUser?.permissions?.['service-types']?.edit;
+    const canDelete = isAdmin || currentUser?.permissions?.['service-types']?.delete;
     const { visibleColumns, toggleColumn } = useColumnVisibility({
         image: true, name: true, category: true, description: true,
         sla: true, template: true, status: true, actions: true,
@@ -152,13 +159,15 @@ export default function ServiceTypesPage() {
     return (
         <div className="space-y-8 animate-fadeIn">
             <PageHeader title="Tipos de Atendimento" subtitle="Configure as categorias de tickets e seus SLAs padrão.">
-                <button
-                    onClick={() => handleOpenModal()}
-                    className="flex items-center justify-center rounded-2xl h-14 px-8 bg-primary text-white text-sm font-bold shadow-xl shadow-primary/20 hover:bg-blue-700 hover:-translate-y-0.5 transition-all gap-2 active:scale-95"
-                >
-                    <span className="material-symbols-outlined text-[24px]">add_circle</span>
-                    Novo Tipo
-                </button>
+                {canCreate && (
+                    <button
+                        onClick={() => handleOpenModal()}
+                        className="flex items-center justify-center rounded-2xl h-14 px-8 bg-primary text-white text-sm font-bold shadow-xl shadow-primary/20 hover:bg-blue-700 hover:-translate-y-0.5 transition-all gap-2 active:scale-95"
+                    >
+                        <span className="material-symbols-outlined text-[24px]">add_circle</span>
+                        Novo Tipo
+                    </button>
+                )}
             </PageHeader>
 
             <div className="px-4">
@@ -271,15 +280,21 @@ export default function ServiceTypesPage() {
                                             {visibleColumns.actions && (
                                                 <td className="px-0 md:px-8 py-2 md:py-[6px] whitespace-nowrap text-right w-full md:w-32 md:shrink-0 flex items-center justify-end">
                                                     <div className="flex items-center justify-end gap-1 w-full">
-                                                        <button onClick={() => handleOpenModal(service, true)} className="p-2 text-slate-400 hover:text-primary transition-colors" title="Visualizar">
-                                                            <span className="material-symbols-outlined text-[20px]">visibility</span>
-                                                        </button>
-                                                        <button onClick={() => handleOpenModal(service, false)} disabled={!service.active} className="p-2 text-slate-400 hover:text-amber-500 transition-colors disabled:opacity-30" title="Editar">
-                                                            <span className="material-symbols-outlined text-[20px]">edit</span>
-                                                        </button>
-                                                        <button onClick={() => openDeleteModal(service.id, service.name)} disabled={!service.active} className="p-2 text-slate-400 hover:text-rose-600 transition-colors disabled:opacity-30" title="Excluir">
-                                                            <span className="material-symbols-outlined text-[20px]">delete</span>
-                                                        </button>
+                                                        {canView && (
+                                                            <button onClick={() => handleOpenModal(service, true)} className="p-2 text-slate-400 hover:text-primary transition-colors" title="Visualizar">
+                                                                <span className="material-symbols-outlined text-[20px]">visibility</span>
+                                                            </button>
+                                                        )}
+                                                        {canEdit && (
+                                                            <button onClick={() => handleOpenModal(service, false)} disabled={!service.active} className="p-2 text-slate-400 hover:text-amber-500 transition-colors disabled:opacity-30" title="Editar">
+                                                                <span className="material-symbols-outlined text-[20px]">edit</span>
+                                                            </button>
+                                                        )}
+                                                        {canDelete && (
+                                                            <button onClick={() => openDeleteModal(service.id, service.name)} disabled={!service.active} className="p-2 text-slate-400 hover:text-rose-600 transition-colors disabled:opacity-30" title="Excluir">
+                                                                <span className="material-symbols-outlined text-[20px]">delete</span>
+                                                            </button>
+                                                        )}
                                                     </div>
                                                 </td>
                                             )}

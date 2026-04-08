@@ -21,10 +21,10 @@ export const generalSchema = z.object({
     fantasia: z.string().nullish(),
     tipoPessoa: z.enum(['Juridica', 'Fisica']),
     documento: z.string()
-        .refine(validateCnpjOrCpf, { message: 'Documento deve ter 11 (CPF) ou 14 (CNPJ) dígitos numéricos' }),
+        .refine(val => val === '' || validateCnpjOrCpf(val), { message: 'Documento deve ter 11 (CPF) ou 14 (CNPJ) dígitos numéricos' }),
     inscricaoEstadualRg: z.string().nullish(),
     dataAbertura: z.string().nullish(),
-    email: z.string().email('E-mail inválido'),
+    email: z.string().email('E-mail inválido').or(z.literal('')),
     telefone1: z.string().nullish(),
     telefone2: z.string().nullish(),
     homePage: z.string().nullish().or(z.literal('')),
@@ -39,8 +39,8 @@ export const addressSchema = z.object({
     complemento: z.string().nullish(),
     bairro: z.string().min(1, 'Bairro obrigatório'),
     cidade: z.string().min(1, 'Cidade obrigatória'),
-    uf: z.string().length(2, 'UF deve ter 2 caracteres'),
-    cep: z.string().length(8, 'CEP deve ter 8 dígitos').regex(/^\d{8}$/, 'CEP deve conter apenas números'),
+    uf: z.string().length(2, 'UF deve ter 2 caracteres').or(z.literal('')),
+    cep: z.string().length(8, 'CEP deve ter 8 dígitos').regex(/^\d{8}$/, 'CEP deve conter apenas números').or(z.literal('')),
 });
 
 export const contractSchema = z.object({

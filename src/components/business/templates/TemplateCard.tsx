@@ -8,6 +8,9 @@ interface TemplateCardProps {
     onEdit: (template: ImplementationTemplate) => void;
     onDelete: (id: string) => void;
     onPrint: (template: ImplementationTemplate) => void;
+    canView?: boolean;
+    canEdit?: boolean;
+    canDelete?: boolean;
 }
 
 /**
@@ -18,7 +21,10 @@ export const TemplateCard: React.FC<TemplateCardProps> = ({
     template,
     onEdit,
     onDelete,
-    onPrint
+    onPrint,
+    canView = false,
+    canEdit = false,
+    canDelete = false
 }) => {
     return (
         <div 
@@ -33,18 +39,31 @@ export const TemplateCard: React.FC<TemplateCardProps> = ({
                 >
                     <span className="material-symbols-outlined text-[20px]">print</span>
                 </button>
-                <button 
-                    onClick={() => onEdit(template)} 
-                    className="p-2 bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 rounded-xl hover:text-primary transition-colors"
-                >
-                    <span className="material-symbols-outlined text-[20px]">edit</span>
-                </button>
-                <button 
-                    onClick={() => onDelete(template.id)} 
-                    className="p-2 bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 rounded-xl hover:text-rose-600 transition-colors"
-                >
-                    <span className="material-symbols-outlined text-[20px]">delete</span>
-                </button>
+                {canEdit && (
+                    <button 
+                        onClick={() => onEdit(template)} 
+                        className="p-2 bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 rounded-xl hover:text-primary transition-colors"
+                    >
+                        <span className="material-symbols-outlined text-[20px]">edit</span>
+                    </button>
+                )}
+                {!canEdit && canView && (
+                    <button 
+                        onClick={() => onEdit(template)} 
+                        className="p-2 bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 rounded-xl hover:text-primary transition-colors"
+                        title="Visualizar"
+                    >
+                        <span className="material-symbols-outlined text-[20px]">visibility</span>
+                    </button>
+                )}
+                {canDelete && (
+                    <button 
+                        onClick={() => onDelete(template.id)} 
+                        className="p-2 bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 rounded-xl hover:text-rose-600 transition-colors"
+                    >
+                        <span className="material-symbols-outlined text-[20px]">delete</span>
+                    </button>
+                )}
             </div>
 
             {/* Cabeçalho do Card */}

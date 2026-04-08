@@ -42,6 +42,13 @@ const DEFAULT_STEPS_TEXT = [
 export default function ImplementationTemplatesPage() {
     // Templates disponíveis no tenant (estado global)
     const { implementationTemplates: templates, fetchTemplates, saveTemplate, removeTemplate, currentUser, isTemplatesLoading } = useApp();
+    
+    const role = currentUser?.role?.toLowerCase();
+    const isAdmin = role === 'admin' || role === 'desenvolvedor';
+    const canView = isAdmin || currentUser?.permissions?.templates?.view;
+    const canCreate = isAdmin || currentUser?.permissions?.templates?.create;
+    const canEdit = isAdmin || currentUser?.permissions?.templates?.edit;
+    const canDelete = isAdmin || currentUser?.permissions?.templates?.delete;
     // Busca textual pelo nome do template
     const [searchTerm, setSearchTerm] = useState('');
     // Abre/fecha modal de criar/editar
@@ -247,13 +254,15 @@ export default function ImplementationTemplatesPage() {
                     <h1 className="text-3xl font-black text-slate-900 dark:text-slate-50 tracking-tight">Padronização de Implantação</h1>
                     <p className="text-slate-500 dark:text-slate-400 text-base font-medium">Gerencie os roteiros e checklists técnicos para sistemas.</p>
                 </div>
-                <button
-                    onClick={() => handleOpenModal()}
-                    className="flex items-center justify-center rounded-xl h-12 px-6 bg-primary text-white text-sm font-bold shadow-lg shadow-primary/20 hover:bg-blue-700 hover:-translate-y-0.5 transition-all gap-2 active:scale-95"
-                >
-                    <span className="material-symbols-outlined text-[20px]">add</span>
-                    Novo Roteiro
-                </button>
+                {canCreate && (
+                    <button
+                        onClick={() => handleOpenModal()}
+                        className="flex items-center justify-center rounded-xl h-12 px-6 bg-primary text-white text-sm font-bold shadow-lg shadow-primary/20 hover:bg-blue-700 hover:-translate-y-0.5 transition-all gap-2 active:scale-95"
+                    >
+                        <span className="material-symbols-outlined text-[20px]">add</span>
+                        Novo Roteiro
+                    </button>
+                )}
             </div>
 
             <div className="flex flex-col gap-2 px-4">
@@ -289,6 +298,8 @@ export default function ImplementationTemplatesPage() {
                             onEdit={handleOpenModal}
                             onDelete={handleDelete}
                             onPrint={handlePrint}
+                            canEdit={canEdit}
+                            canDelete={canDelete}
                         />
                     ))}
                 </div>
@@ -304,6 +315,7 @@ export default function ImplementationTemplatesPage() {
                 removeStep={removeStep}
                 updateStep={updateStep}
                 toggleStepRequired={toggleStepRequired}
+                canEdit={canEdit}
             />
             <style>{`
         @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }

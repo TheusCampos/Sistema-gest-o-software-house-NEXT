@@ -3,6 +3,7 @@ import { sql } from "drizzle-orm";
 import { db } from "@/lib/db";
 import { SupportTicket } from "@/types";
 import { withAuth } from "@/lib/api-wrapper";
+import { checkModulePermission } from "@/lib/security";
 
 export const dynamic = "force-dynamic";
 
@@ -31,6 +32,9 @@ const TICKET_SELECT = sql`
 `;
 
 export const GET = withAuth(async (_request, session) => {
+    const permissionError = await checkModulePermission(session, 'tickets', 'view');
+    if (permissionError) return permissionError;
+
     const result = await db.execute(sql`
         ${TICKET_SELECT}
         WHERE t.tenant_id = ${session.tenantId}
@@ -41,6 +45,9 @@ export const GET = withAuth(async (_request, session) => {
 });
 
 export const POST = withAuth(async (request, session) => {
+    const permissionError = await checkModulePermission(session, 'tickets', 'create');
+    if (permissionError) return permissionError;
+
     const body = (await request.json()) as SupportTicket;
 
     if (!body.clientId || !body.subject || !body.description) {
@@ -102,6 +109,9 @@ export const POST = withAuth(async (request, session) => {
 });
 
 export const PUT = withAuth(async (request, session) => {
+    const permissionError = await checkModulePermission(session, 'tickets', 'edit');
+    if (permissionError) return permissionError;
+
     const body = (await request.json()) as Partial<SupportTicket>;
 
     if (!body.id) {

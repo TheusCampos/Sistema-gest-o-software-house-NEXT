@@ -14,6 +14,7 @@ interface TemplateModalProps {
     removeStep: (index: number) => void;
     updateStep: (index: number, label: string) => void;
     toggleStepRequired: (index: number) => void;
+    canEdit?: boolean;
 }
 
 /**
@@ -30,9 +31,12 @@ export const TemplateModal: React.FC<TemplateModalProps> = ({
     addStep,
     removeStep,
     updateStep,
-    toggleStepRequired
+    toggleStepRequired,
+    canEdit = false
 }) => {
     if (!isOpen) return null;
+
+    const isReadOnly = !canEdit && !!editingId;
 
     return (
         <div className="fixed inset-0 z-[160] flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-md animate-fadeIn">
@@ -41,7 +45,7 @@ export const TemplateModal: React.FC<TemplateModalProps> = ({
                 <div className="p-8 border-b border-slate-100 dark:border-slate-800 flex justify-between items-center shrink-0">
                     <div>
                         <h3 className="text-2xl font-black text-slate-900 dark:text-white tracking-tight">
-                            {editingId ? 'Editar Roteiro' : 'Novo Roteiro'}
+                            {editingId ? (isReadOnly ? 'Visualizar Roteiro' : 'Editar Roteiro') : 'Novo Roteiro'}
                         </h3>
                         <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest mt-1">
                             Configuração de passos e requisitos
@@ -66,7 +70,8 @@ export const TemplateModal: React.FC<TemplateModalProps> = ({
                                 </label>
                                 <input
                                     required
-                                    className="w-full rounded-2xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 px-5 py-4 text-base font-bold outline-none focus:ring-4 focus:ring-primary/10 transition-all text-slate-900 dark:text-white"
+                                    disabled={isReadOnly}
+                                    className="w-full rounded-2xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 px-5 py-4 text-base font-bold outline-none focus:ring-4 focus:ring-primary/10 transition-all text-slate-900 dark:text-white disabled:opacity-70 disabled:cursor-not-allowed"
                                     value={formData.name}
                                     onChange={e => setFormData({ ...formData, name: e.target.value })}
                                     placeholder="Ex: Implantação Completa CRONOS"
@@ -80,7 +85,8 @@ export const TemplateModal: React.FC<TemplateModalProps> = ({
                                 Descrição
                             </label>
                             <textarea
-                                className="w-full rounded-2xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 px-5 py-4 text-sm font-medium outline-none focus:ring-4 focus:ring-primary/10 resize-none h-24 transition-all text-slate-900 dark:text-white"
+                                disabled={isReadOnly}
+                                className="w-full rounded-2xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 px-5 py-4 text-sm font-medium outline-none focus:ring-4 focus:ring-primary/10 resize-none h-24 transition-all text-slate-900 dark:text-white disabled:opacity-70 disabled:cursor-not-allowed"
                                 value={formData.description}
                                 onChange={e => setFormData({ ...formData, description: e.target.value })}
                                 placeholder="Descreva o objetivo deste checklist..."
@@ -103,6 +109,7 @@ export const TemplateModal: React.FC<TemplateModalProps> = ({
                             <label className="relative inline-flex items-center cursor-pointer">
                                 <input 
                                     type="checkbox" 
+                                    disabled={isReadOnly}
                                     className="sr-only peer" 
                                     checked={formData.requiresBankConfig} 
                                     onChange={e => setFormData({ ...formData, requiresBankConfig: e.target.checked })} 
@@ -118,13 +125,15 @@ export const TemplateModal: React.FC<TemplateModalProps> = ({
                                     <span className="material-symbols-outlined text-primary">checklist</span>
                                     Etapas do Checklist ({formData.steps.length})
                                 </label>
-                                <button 
-                                    type="button" 
-                                    onClick={addStep} 
-                                    className="px-4 py-2 bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 text-xs font-bold uppercase tracking-widest rounded-lg hover:bg-slate-200 dark:hover:bg-slate-700 transition-colors"
-                                >
-                                    + Adicionar Passo
-                                </button>
+                                {!isReadOnly && (
+                                    <button 
+                                        type="button" 
+                                        onClick={addStep} 
+                                        className="px-4 py-2 bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 text-xs font-bold uppercase tracking-widest rounded-lg hover:bg-slate-200 dark:hover:bg-slate-700 transition-colors"
+                                    >
+                                        + Adicionar Passo
+                                    </button>
+                                )}
                             </div>
 
                             <div className="space-y-3">
@@ -133,7 +142,8 @@ export const TemplateModal: React.FC<TemplateModalProps> = ({
                                         <span className="text-xs font-mono text-slate-400 w-6 text-right font-bold shrink-0">{idx + 1}.</span>
                                         <input
                                             type="text"
-                                            className="flex-1 rounded-lg border-none bg-transparent px-2 py-1.5 text-sm font-bold text-slate-700 dark:text-slate-300 focus:ring-0 outline-none placeholder:font-normal"
+                                            disabled={isReadOnly}
+                                            className="flex-1 rounded-lg border-none bg-transparent px-2 py-1.5 text-sm font-bold text-slate-700 dark:text-slate-300 focus:ring-0 outline-none placeholder:font-normal disabled:opacity-70 disabled:cursor-not-allowed"
                                             value={step.label}
                                             onChange={e => updateStep(idx, e.target.value)}
                                             placeholder="Descreva a etapa..."
@@ -142,22 +152,25 @@ export const TemplateModal: React.FC<TemplateModalProps> = ({
                                             <button
                                                 type="button"
                                                 onClick={() => toggleStepRequired(idx)}
+                                                disabled={isReadOnly}
                                                 className={`px-2 py-1 rounded-lg text-[10px] font-black uppercase tracking-wide transition-colors ${
                                                     step.required 
                                                     ? 'text-emerald-600 bg-emerald-100 dark:bg-emerald-900/30' 
                                                     : 'text-slate-400 bg-slate-200 dark:bg-slate-700'
-                                                }`}
+                                                } disabled:opacity-70 disabled:cursor-not-allowed`}
                                                 title={step.required ? "Obrigatório" : "Opcional"}
                                             >
                                                 {step.required ? 'Req' : 'Opc'}
                                             </button>
-                                            <button
-                                                type="button"
-                                                onClick={() => removeStep(idx)}
-                                                className="w-7 h-7 flex items-center justify-center text-slate-400 hover:text-rose-500 hover:bg-rose-50 dark:hover:bg-rose-900/20 rounded-lg transition-colors"
-                                            >
-                                                <span className="material-symbols-outlined text-[18px]">close</span>
-                                            </button>
+                                            {!isReadOnly && (
+                                                <button
+                                                    type="button"
+                                                    onClick={() => removeStep(idx)}
+                                                    className="w-7 h-7 flex items-center justify-center text-slate-400 hover:text-rose-500 hover:bg-rose-50 dark:hover:bg-rose-900/20 rounded-lg transition-colors"
+                                                >
+                                                    <span className="material-symbols-outlined text-[18px]">close</span>
+                                                </button>
+                                            )}
                                         </div>
                                     </div>
                                 ))}
@@ -173,15 +186,17 @@ export const TemplateModal: React.FC<TemplateModalProps> = ({
                         onClick={onClose}
                         className="px-6 py-3 text-xs font-black uppercase tracking-widest text-slate-500 hover:bg-slate-200 dark:hover:bg-slate-800 transition-colors rounded-xl font-bold"
                     >
-                        Cancelar
+                        {isReadOnly ? 'Fechar' : 'Cancelar'}
                     </button>
-                    <button
-                        type="submit"
-                        form="templateForm"
-                        className="px-8 py-3 bg-primary text-white text-xs font-black uppercase tracking-widest rounded-xl shadow-lg shadow-primary/20 hover:bg-blue-700 transition-all active:scale-95 font-bold"
-                    >
-                        Salvar Roteiro
-                    </button>
+                    {!isReadOnly && (
+                        <button
+                            type="submit"
+                            form="templateForm"
+                            className="px-8 py-3 bg-primary text-white text-xs font-black uppercase tracking-widest rounded-xl shadow-lg shadow-primary/20 hover:bg-blue-700 transition-all active:scale-95 font-bold"
+                        >
+                            Salvar Roteiro
+                        </button>
+                    )}
                 </div>
             </div>
         </div>

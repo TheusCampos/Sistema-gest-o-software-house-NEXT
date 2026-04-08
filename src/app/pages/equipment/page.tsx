@@ -15,6 +15,13 @@ export default function EquipmentPage() {
         fetchEquipment(currentUser.tenantId);
     }, [currentUser, fetchEquipment]);
 
+    const role = currentUser?.role?.toLowerCase();
+    const isAdmin = role === 'admin' || role === 'desenvolvedor';
+    const canView = isAdmin || currentUser?.permissions?.equipment?.view;
+    const canCreate = isAdmin || currentUser?.permissions?.equipment?.create;
+    const canEdit = isAdmin || currentUser?.permissions?.equipment?.edit;
+    const canDelete = isAdmin || currentUser?.permissions?.equipment?.delete;
+
     // Busca textual (nome, responsável, id)
     const [searchTerm, setSearchTerm] = useState('');
     // Filtro por tipo de ativo (Desktop/Notebook/Server/VM)
@@ -116,10 +123,12 @@ export default function EquipmentPage() {
                     <h1 className="text-3xl font-black text-slate-900 dark:text-slate-50 tracking-tight">Inventário de TI</h1>
                     <p className="text-slate-500 dark:text-slate-400 text-base font-medium">Gerenciamento centralizado de hardware e máquinas virtuais.</p>
                 </div>
-                <Link href="/equipment/new" className="flex items-center justify-center rounded-xl h-12 px-6 bg-primary text-white text-sm font-bold shadow-lg shadow-primary/20 hover:bg-blue-700 hover:-translate-y-0.5 transition-all gap-2 active:scale-95">
-                    <span className="material-symbols-outlined">add_to_queue</span>
-                    Cadastrar Equipamento
-                </Link>
+                {canCreate && (
+                    <Link href="/equipment/new" className="flex items-center justify-center rounded-xl h-12 px-6 bg-primary text-white text-sm font-bold shadow-lg shadow-primary/20 hover:bg-blue-700 hover:-translate-y-0.5 transition-all gap-2 active:scale-95">
+                        <span className="material-symbols-outlined">add_to_queue</span>
+                        Cadastrar Equipamento
+                    </Link>
+                )}
             </div>
 
             <div className="px-4">
@@ -272,15 +281,21 @@ export default function EquipmentPage() {
                                         {visibleColumns.actions && (
                                             <td className="px-0 md:px-8 py-2 md:py-[6px] whitespace-nowrap text-right w-full md:w-32 md:shrink-0 flex items-center justify-end">
                                                 <div className="flex items-center justify-end gap-1 w-full">
-                                                    <Link href={`/equipment/${item.id}?readOnly=true`} className="p-2 text-slate-400 hover:text-primary transition-colors" title="Visualizar">
-                                                        <span className="material-symbols-outlined text-[20px]">visibility</span>
-                                                    </Link>
-                                                    <Link href={`/equipment/${item.id}`} className="p-2 text-slate-400 hover:text-amber-500 transition-colors" title="Editar">
-                                                        <span className="material-symbols-outlined text-[20px]">edit</span>
-                                                    </Link>
-                                                    <button onClick={() => handleDeleteClick(item)} className="p-2 text-slate-400 hover:text-rose-600 transition-colors" title="Excluir">
-                                                        <span className="material-symbols-outlined text-[20px]">delete</span>
-                                                    </button>
+                                                    {canView && (
+                                                        <Link href={`/equipment/${item.id}?readOnly=true`} className="p-2 text-slate-400 hover:text-primary transition-colors" title="Visualizar">
+                                                            <span className="material-symbols-outlined text-[20px]">visibility</span>
+                                                        </Link>
+                                                    )}
+                                                    {canEdit && (
+                                                        <Link href={`/equipment/${item.id}`} className="p-2 text-slate-400 hover:text-amber-500 transition-colors" title="Editar">
+                                                            <span className="material-symbols-outlined text-[20px]">edit</span>
+                                                        </Link>
+                                                    )}
+                                                    {canDelete && (
+                                                        <button onClick={() => handleDeleteClick(item)} className="p-2 text-slate-400 hover:text-rose-600 transition-colors" title="Excluir">
+                                                            <span className="material-symbols-outlined text-[20px]">delete</span>
+                                                        </button>
+                                                    )}
                                                 </div>
                                             </td>
                                         )}

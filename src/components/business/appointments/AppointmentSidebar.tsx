@@ -16,6 +16,7 @@ interface AppointmentSidebarProps {
     setFilterDeploy: (v: boolean) => void;
     filterTask: boolean;
     setFilterTask: (v: boolean) => void;
+    canCreate?: boolean;
 }
 
 /**
@@ -35,18 +36,21 @@ export const AppointmentSidebar: React.FC<AppointmentSidebarProps> = ({
     filterDeploy,
     setFilterDeploy,
     filterTask,
-    setFilterTask
+    setFilterTask,
+    canCreate = false
 }) => {
     return (
         <aside className="w-64 border-r border-slate-200 dark:border-slate-800 p-6 flex flex-col gap-8 overflow-y-auto bg-slate-50/50 dark:bg-slate-900/50 hidden lg:flex shrink-0">
             {/* Botão de Criação */}
-            <button 
-                onClick={onNewAppointment} 
-                className="flex items-center justify-center gap-2 bg-primary hover:bg-blue-600 text-white p-3 rounded-2xl font-bold shadow-xl shadow-primary/20 transition-all active:scale-95"
-            >
-                <span className="material-symbols-outlined">add</span>
-                Novo Agendamento
-            </button>
+            {canCreate && (
+                <button 
+                    onClick={onNewAppointment} 
+                    className="flex items-center justify-center gap-2 bg-primary hover:bg-blue-600 text-white p-3 rounded-2xl font-bold shadow-xl shadow-primary/20 transition-all active:scale-95"
+                >
+                    <span className="material-symbols-outlined">add</span>
+                    Novo Agendamento
+                </button>
+            )}
 
             {/* Mini Calendário */}
             <div className="animate-fadeIn">

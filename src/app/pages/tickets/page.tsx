@@ -28,6 +28,11 @@ import { useApp } from '@/context/AppContext';
 export default function TicketsPage() {
     // Tickets e action de update vêm do Context (estado global)
     const { tickets, updateTicket, fetchTickets, currentUser } = useApp();
+    const role = currentUser?.role?.toLowerCase();
+    const isAdmin = role === 'admin' || role === 'desenvolvedor';
+    const canCreate = isAdmin || currentUser?.permissions?.tickets?.create;
+    const canEdit = isAdmin || currentUser?.permissions?.tickets?.edit;
+    const canDelete = isAdmin || currentUser?.permissions?.tickets?.delete;
     // Ref para controlar scroll horizontal do Kanban no mobile
     const scrollContainerRef = useRef<HTMLDivElement>(null);
     // Índice aproximado do scroll (usado para navegação/indicadores)
@@ -360,13 +365,15 @@ export default function TicketsPage() {
                             <span className="material-symbols-outlined absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 text-[20px]">search</span>
                             <input type="text" placeholder="Filtrar tickets..." className="pl-10 pr-4 py-2.5 rounded-xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 text-sm font-medium outline-none focus:ring-2 focus:ring-primary w-full sm:w-64" />
                         </div>
-                        <Link
-                            href="/tickets/new"
-                            className="bg-primary hover:bg-blue-600 text-white px-5 py-2.5 rounded-xl shadow-lg shadow-primary/20 font-bold text-sm flex items-center justify-center gap-2 transition-all active:scale-95 whitespace-nowrap"
-                        >
-                            <span className="material-symbols-outlined text-[20px]">add</span>
-                            <span className="hidden sm:inline">Novo Ticket</span>
-                        </Link>
+                        {canCreate && (
+                            <Link
+                                href="/tickets/new"
+                                className="bg-primary hover:bg-blue-600 text-white px-5 py-2.5 rounded-xl shadow-lg shadow-primary/20 font-bold text-sm flex items-center justify-center gap-2 transition-all active:scale-95 whitespace-nowrap"
+                            >
+                                <span className="material-symbols-outlined text-[20px]">add</span>
+                                <span className="hidden sm:inline">Novo Ticket</span>
+                            </Link>
+                        )}
                     </div>
                 </div>
 
@@ -450,6 +457,7 @@ export default function TicketsPage() {
                                                     onDragEnd={handleDragEnd}
                                                     onCardDrop={handleCardDrop}
                                                     onClick={openTicketDetails}
+                                                    canEdit={canEdit}
                                                 />
                                             ))
                                         ) : (
@@ -494,6 +502,7 @@ export default function TicketsPage() {
                 handleToggleTask={handleToggleTask}
                 handleDeleteTask={handleDeleteTask}
                 kanbanColumns={KANBAN_COLUMNS}
+                canEdit={canEdit}
             />
 
             {selectedTicket && (
